@@ -53,7 +53,20 @@
       </div>
     </div>
     @endif
- 
+    
+    @if($table_type == 'datatables')
+    @push('head')
+      <link href="{{ asset("vendor/crudbooster/assets/datatables/media/css/jquery.dataTables.min.css") }}" rel="stylesheet" type="text/css" />
+    @endpush
+    @push('bottom')
+      <script src="{{ asset("vendor/crudbooster/assets/datatables/media/js/jquery.dataTables.min.js") }}"></script>
+    @endpush
+    <div class="box">
+      <table id="example" class="display" cellspacing="0" width="100%">
+
+      </table>
+    </div>
+    @else
     <div class="box">
       <div class="box-header">  
         @if($button_bulk_action && ( ($button_delete && CRUDBooster::isDelete()) || $button_selected) )
@@ -129,6 +142,7 @@
         @include("crudbooster::default.table")
       </div>
     </div>
+    @endif
 
    @if(!is_null($post_index_html) && !empty($post_index_html))
        {!! $post_index_html !!}

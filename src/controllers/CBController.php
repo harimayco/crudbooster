@@ -38,6 +38,7 @@ class CBController extends Controller {
 	public $limit              = 20;
 	public $global_privilege   = FALSE;
 	public $show_numbering	   = FALSE;
+	public $table_type	   	   = 'html';
 
 	public $alert                 = array();
 	public $index_button          = array();
@@ -122,6 +123,7 @@ class CBController extends Controller {
 		$this->data['sub_module']            = $this->sub_module;
 		$this->data['parent_field'] 		 = (g('parent_field'))?:$this->parent_field;
 		$this->data['parent_id'] 		 	 = (g('parent_id'))?:$this->parent_id;
+		$this->data['table_type']            = $this->table_type;
 
 		if(CRUDBooster::getCurrentMethod() == 'getProfile') {
 			Session::put('current_row_id',CRUDBooster::myId());
@@ -144,6 +146,233 @@ class CBController extends Controller {
 				}
 			}
 		}
+	}
+
+	public function getJson() {
+		$this->cbLoader();
+
+		$module = CRUDBooster::getCurrentModule();
+
+		if(!CRUDBooster::isView() && $this->global_privilege==FALSE) {
+			CRUDBooster::insertLog(trans('crudbooster.log_try_view',['module'=>$module->name]));
+			CRUDBooster::redirect(CRUDBooster::adminPath(),trans('crudbooster.denied_access'));
+		}
+
+		if(Request::get('parent_table')) {
+			$parentTablePK = CB::pk(g('parent_table'));
+			$data['parent_table'] = DB::table(Request::get('parent_table'))->where($parentTablePK,Request::get('parent_id'))->first();
+			if(Request::get('foreign_key')) {
+				$data['parent_field'] = Request::get('foreign_key');
+			}else{
+				$data['parent_field'] = CB::getTableForeignKey(g('parent_table'),$this->table);	
+			}
+
+			if($parent_field) {
+				foreach($this->columns_table as $i=>$col) {
+					if($col['name'] == $parent_field) {
+						unset($this->columns_table[$i]);
+					}
+				}
+			}
+		}
+
+		$data['table'] 	  = $this->table;
+		$data['table_pk'] = CB::pk($this->table);
+		$data['page_title']       = $module->name;
+		$data['page_description'] = trans('crudbooster.default_module_description');
+		$data['date_candidate']   = $this->date_candidate;
+		$data['limit'] = $limit   = (Request::get('limit'))?Request::get('limit'):$this->limit;
+
+		$tablePK = $data['table_pk'];
+		$table_columns = CB::getTableColumns($this->table);
+		$result = DB::table($this->table)->select(DB::raw($this->table.".".$this->primary_key));
+
+		if(Request::get('parent_id')) {
+			$table_parent = $this->table;
+			$table_parent = CRUDBooster::parseSqlTable($table_parent)['table'];
+			$result->where($table_parent.'.'.Request::get('foreign_key'),Request::get('parent_id'));
+		}
+
+
+		$this->hook_query_index($result);
+
+		if(in_array('deleted_at', $table_columns)) {
+			$result->where($this->table.'.deleted_at',NULL);
+		}
+
+		$alias            = array();
+		$join_alias_count = 0;
+		$join_table_temp  = array();
+		$table            = $this->table;
+		$columns_table    = $this->columns_table;
+		foreach($columns_table as $index => $coltab) {
+
+			$join = @$coltab['join'];
+			$join_where = @$coltab['join_where'];
+			$join_id = @$coltab['join_id'];
+			$field = @$coltab['name'];
+			$join_table_temp[] = $table;
+
+			if(!$field) die('Please make sure there is key `name` in each row of col');
+
+			if(strpos($field, ' as ')!==FALSE) {
+				$field = substr($field, strpos($field, ' as ')+4);
+				$field_with = (array_key_exists('join', $coltab))?str_replace(",",".",$coltab['join']):$field;
+				$result->addselect(DB::raw($coltab['name']));
+				$columns_table[$index]['type_data']   = 'varchar';
+				$columns_table[$index]['field']       = $field;
+				$columns_table[$index]['field_raw']   = $field;
+				$columns_table[$index]['field_with']  = $field_with;
+				$columns_table[$index]['is_subquery'] = true;
+				continue;
+			}
+
+			if(strpos($field,'.')!==FALSE) {
+				$result->addselect($field);
+			}else{
+				$result->addselect($table.'.'.$field);
+			}
+
+			$field_array = explode('.', $field);
+
+			if(isset($field_array[1])) {
+				$field = $field_array[1];
+				$table = $field_array[0];
+			}
+
+			if($join) {
+
+				$join_exp     = explode(',', $join);
+
+				$join_table  = $join_exp[0];
+				$joinTablePK = CB::pk($join_table);
+				$join_column = $join_exp[1];
+				$join_alias  = str_replace(".", "_", $join_table);
+
+				if(in_array($join_table, $join_table_temp)) {
+					$join_alias_count += 1;
+					$join_alias = $join_table.$join_alias_count;
+				}
+				$join_table_temp[] = $join_table;
+
+				$result->leftjoin($join_table.' as '.$join_alias,$join_alias.(($join_id)? '.'.$join_id:'.'.$joinTablePK),'=',DB::raw($table.'.'.$field. (($join_where) ? ' AND '.$join_where.' ':'') ) );
+				$result->addselect($join_alias.'.'.$join_column.' as '.$join_alias.'_'.$join_column);
+
+				$join_table_columns = CRUDBooster::getTableColumns($join_table);
+				if($join_table_columns) {
+					foreach($join_table_columns as $jtc) {
+						$result->addselect($join_alias.'.'.$jtc.' as '.$join_alias.'_'.$jtc);
+					}
+				}
+
+				$alias[] = $join_alias;
+				$columns_table[$index]['type_data']	 = CRUDBooster::getFieldType($join_table,$join_column);
+				$columns_table[$index]['field']      = $join_alias.'_'.$join_column;
+				$columns_table[$index]['field_with'] = $join_alias.'.'.$join_column;
+				$columns_table[$index]['field_raw']  = $join_column;
+
+				@$join_table1  = $join_exp[2];
+				@$joinTable1PK = CB::pk($join_table1);
+				@$join_column1 = $join_exp[3];
+				@$join_alias1  = $join_table1;
+
+				if($join_table1 && $join_column1) {
+
+					if(in_array($join_table1, $join_table_temp)) {
+						$join_alias_count += 1;
+						$join_alias1 = $join_table1.$join_alias_count;
+					}
+
+					$join_table_temp[] = $join_table1;
+
+					$result->leftjoin($join_table1.' as '.$join_alias1,$join_alias1.'.'.$joinTable1PK,'=',$join_alias.'.'.$join_column);
+					$result->addselect($join_alias1.'.'.$join_column1.' as '.$join_column1.'_'.$join_alias1);
+					$alias[] = $join_alias1;
+					$columns_table[$index]['type_data']	 = CRUDBooster::getFieldType($join_table1,$join_column1);
+					$columns_table[$index]['field']      = $join_column1.'_'.$join_alias1;
+					$columns_table[$index]['field_with'] = $join_alias1.'.'.$join_column1;
+					$columns_table[$index]['field_raw']  = $join_column1;
+				}
+
+			}else{
+
+				$result->addselect($table.'.'.$field);
+				$columns_table[$index]['type_data']	 = CRUDBooster::getFieldType($table,$field);
+				$columns_table[$index]['field']      = $field;
+				$columns_table[$index]['field_raw']  = $field;
+				$columns_table[$index]['field_with'] = $table.'.'.$field;
+			}
+		}
+
+		//return datatables()->of($result)->toJson();
+		$datatables = datatables()->of($result);
+		
+		foreach($columns_table as $index => $col) {
+			$datatables->editColumn($col['field'], function ($row) use ($columns_table, $col, $table) {
+				$value = @$row->{$col['field']};
+		        $title = @$row->{$this->title_field};
+		        $label = $col['label'];
+				//$value = 'test ' . $row->{$col['field']};
+
+				if(isset($col['image'])) {
+					if($value=='') {			              
+						$value = "<a  data-lightbox='roadtrip' rel='group_{{$table}}' title='$label: $title' href='".asset('vendor/crudbooster/avatar.jpg')."'><img width='40px' height='40px' src='".asset('vendor/crudbooster/avatar.jpg')."'/></a>";
+					}else{
+						$pic = (strpos($value,'http://')!==FALSE)?$value:asset($value);				            
+						$value = "<a data-lightbox='roadtrip'  rel='group_{{$table}}' title='$label: $title' href='".$pic."'><img width='40px' height='40px' src='".$pic."'/></a>";
+					}			            
+				}
+
+				if(@$col['download']) {
+					$url = (strpos($value,'http://')!==FALSE)?$value:asset($value).'?download=1';
+					if($value) {
+						$value = "<a class='btn btn-xs btn-primary' href='$url' target='_blank' title='Download File'><i class='fa fa-download'></i> Download</a>";
+					}else{
+						$value = " - ";
+					}
+				}
+
+				if($col['str_limit']) {
+					$value = trim(strip_tags($value));
+					$value = str_limit($value,$col['str_limit']);
+				}
+
+				if($col['nl2br']) {
+					$value = nl2br($value);
+				}
+
+				if($col['callback_php']) {
+					foreach($row as $k=>$v) {
+						$col['callback_php'] = str_replace("[".$k."]",$v,$col['callback_php']);
+					}
+					@eval("\$value = ".$col['callback_php'].";");
+				}
+
+			            //New method for callback
+				if(isset($col['callback'])) {
+					$value = call_user_func($col['callback'],$row);
+				}
+
+				$datavalue = @unserialize($value);
+				if ($datavalue !== false) {
+					if($datavalue) {
+						$prevalue = [];
+						foreach($datavalue as $d) {
+							if($d['label']) {
+								$prevalue[] = $d['label'];
+							}
+						}
+						if(count($prevalue)) {
+							$value = implode(", ",$prevalue);
+						}
+					}
+				}
+
+				return $value;
+			});
+		}
+		
+		return response()->json($datatables);
 	}
 
 	public function getIndex() {
