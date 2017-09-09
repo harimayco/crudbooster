@@ -22,7 +22,9 @@
         "doctrine/dbal": "~2.3",        
         "maatwebsite/excel": "~2.1.0",                
         "unisharp/laravel-filemanager": "1.7.*",
-        "intervention/imagecache":"2.*"
+        "intervention/imagecache":"2.*",
+        "yajra/laravel-datatables-oracle":"6.*|7.*|8.*",
+        "yajra/laravel-datatables-html": "2.*|3.*"
     },
     "autoload": {
         "psr-4": {

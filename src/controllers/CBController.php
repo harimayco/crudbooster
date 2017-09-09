@@ -38,6 +38,7 @@ class CBController extends Controller {
 	public $limit              = 20;
 	public $global_privilege   = FALSE;
 	public $show_numbering	   = FALSE;
+	public $table_type	   	   = 'html';
 
 	public $alert                 = array();
 	public $index_button          = array();
@@ -122,6 +123,7 @@ class CBController extends Controller {
 		$this->data['sub_module']            = $this->sub_module;
 		$this->data['parent_field'] 		 = (g('parent_field'))?:$this->parent_field;
 		$this->data['parent_id'] 		 	 = (g('parent_id'))?:$this->parent_id;
+		$this->data['table_type']            = $this->table_type;
 
 		if(CRUDBooster::getCurrentMethod() == 'getProfile') {
 			Session::put('current_row_id',CRUDBooster::myId());
@@ -300,6 +302,131 @@ class CBController extends Controller {
 				$columns_table[$index]['field_raw']  = $field;
 				$columns_table[$index]['field_with'] = $table.'.'.$field;
 			}
+		}
+
+		if($this->table_type == 'datatables') {
+			//return datatables()->of($result)->toJson();
+
+			$datatables = datatables()->of($result);
+
+			/* set row class */
+			$table_row_color = $this->table_row_color;
+			$datatables->setRowClass(function ($row) use ($table_row_color, $html_contents) {
+        	//dd($html_contents);
+				if($table_row_color){        
+					$tr_color = NULL;              
+					foreach($table_row_color as $trc){
+						$query = $trc['condition'];
+						$color = $trc['color'];
+						foreach($row as $key=>$val) {
+							$query = str_replace("[".$key."]",'"'.$val.'"',$query);
+						}
+
+						@eval("if($query) {
+							\$tr_color = \$color;
+						}");
+					}
+					$row_class = $tr_color;
+					return $tr_color;
+				}
+			});
+
+			/*column callback*/
+			$listed_column = array();
+			foreach($columns_table as $index => $col) {
+				$listed_column[] = $col['field_with'];
+
+				$datatables->editColumn($col['field_with'], function ($row) use ($columns_table, $col, $table) {
+
+					$value = e(@$row->{$col['field']});
+					$title = @$row->{$this->title_field};
+					$label = $col['label'];
+					//$value = 'test ' . $row->{$col['field']};
+
+					if(isset($col['image'])) {
+						if($value=='') {			              
+							$value = "<a  data-lightbox='roadtrip' rel='group_{{$table}}' title='$label: $title' href='".asset('vendor/crudbooster/avatar.jpg')."'><img width='40px' height='40px' src='".asset('vendor/crudbooster/avatar.jpg')."'/></a>";
+						}else{
+							$pic = (strpos($value,'http://')!==FALSE)?$value:asset($value);				            
+							$value = "<a data-lightbox='roadtrip'  rel='group_{{$table}}' title='$label: $title' href='".$pic."'><img width='40px' height='40px' src='".$pic."'/></a>";
+						}			            
+					}
+
+					if(@$col['download']) {
+						$url = (strpos($value,'http://')!==FALSE)?$value:asset($value).'?download=1';
+						if($value) {
+							$value = "<a class='btn btn-xs btn-primary' href='$url' target='_blank' title='Download File'><i class='fa fa-download'></i> Download</a>";
+						}else{
+							$value = " - ";
+						}
+					}
+
+					if($col['str_limit']) {
+						$value = trim(strip_tags($value));
+						$value = str_limit($value,$col['str_limit']);
+					}
+
+					if($col['nl2br']) {
+						$value = nl2br($value);
+					}
+
+					if($col['callback_php']) {
+						foreach($row as $k=>$v) {
+							$col['callback_php'] = str_replace("[".$k."]",$v,$col['callback_php']);
+						}
+						@eval("\$value = ".$col['callback_php'].";");
+					}
+
+			            //New method for callback
+					if(isset($col['callback'])) {
+						$value = call_user_func($col['callback'],$row);
+					}
+
+					$datavalue = @unserialize($value);
+					if ($datavalue !== false) {
+						if($datavalue) {
+							$prevalue = [];
+							foreach($datavalue as $d) {
+								if($d['label']) {
+									$prevalue[] = $d['label'];
+								}
+							}
+							if(count($prevalue)) {
+								$value = implode(", ",$prevalue);
+							}
+						}
+					}
+
+					return $value;
+				});
+
+
+				$datatables->removeColumn($col['field']);
+			}
+
+			//dd($columns_table);
+			if (datatables()->getRequest()->ajax()) {
+				$datatables->rawColumns($listed_column);
+		        return response()->json($datatables);
+		    }
+			$data['datatables_html'] = datatables()
+										->getHtmlBuilder()
+										->columns($listed_column)
+										->parameters([
+					                        
+					                        'buttons'      => ['export', 'print', 'reset', 'reload'],
+					                        'initComplete' => "function () {
+					                            this.api().columns().every(function () {
+					                                var column = this;
+					                                var input = document.createElement(\"input\");
+					                                input.style = \"width:90%\";
+					                                $(input).appendTo($(column.footer()).empty())
+					                                .on('change', function () {
+					                                    column.search($(this).val(), false, false, true).draw();
+					                                });
+					                            });
+					                        }",
+					                    ]);
 		}
 
 		if(Request::get('q')) {
@@ -538,7 +665,7 @@ class CBController extends Controller {
 
  		$html_contents = ['html'=>$html_contents,'data'=>$data['result']];
 
-		$data['html_contents'] = $html_contents;
+		$data['html_contents'] = $html_contents;		
 
 		return view("crudbooster::default.index",$data);
 	}
