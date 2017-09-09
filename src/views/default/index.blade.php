@@ -55,17 +55,14 @@
     @endif
     
     @if($table_type == 'datatables')
-    @push('head')
-      <link href="{{ asset("vendor/crudbooster/assets/datatables/media/css/jquery.dataTables.min.css") }}" rel="stylesheet" type="text/css" />
-    @endpush
-    @push('bottom')
-      <script src="{{ asset("vendor/crudbooster/assets/datatables/media/js/jquery.dataTables.min.js") }}"></script>
-    @endpush
-    <div class="box">
-      <table id="example" class="display" cellspacing="0" width="100%">
-
-      </table>
-    </div>
+      @push('bottom')
+         {!! $datatables_html->scripts() !!}
+      @endpush
+      <div class="box">
+        <div class="box-body table-responsive">
+          {!! $datatables_html->table(['class' => 'table table-bordered table-striped'], true) !!}
+       </div>
+      </div>
     @else
     <div class="box">
       <div class="box-header">  
