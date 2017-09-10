@@ -183,9 +183,12 @@ class CBController extends Controller {
 		$data['date_candidate']   = $this->date_candidate;
 		$data['limit'] = $limit   = (Request::get('limit'))?Request::get('limit'):$this->limit;
 
+		$selected_columns = array();
+
 		$tablePK = $data['table_pk'];
 		$table_columns = CB::getTableColumns($this->table);
 		$result = DB::table($this->table)->select(DB::raw($this->table.".".$this->primary_key));
+		$selected_columns[] = $this->table.".".$this->primary_key;
 
 		if(Request::get('parent_id')) {
 			$table_parent = $this->table;
@@ -205,6 +208,8 @@ class CBController extends Controller {
 		$join_table_temp  = array();
 		$table            = $this->table;
 		$columns_table    = $this->columns_table;
+		//dd($columns_table);
+
 		foreach($columns_table as $index => $coltab) {
 
 			$join = @$coltab['join'];
@@ -218,7 +223,13 @@ class CBController extends Controller {
 			if(strpos($field, ' as ')!==FALSE) {
 				$field = substr($field, strpos($field, ' as ')+4);
 				$field_with = (array_key_exists('join', $coltab))?str_replace(",",".",$coltab['join']):$field;
-				$result->addselect(DB::raw($coltab['name']));
+
+				if(!in_array($coltab['name'], $selected_columns)){
+					$result->addselect(DB::raw($coltab['name']));
+					$selected_columns[] = $coltab['name'];
+
+				}
+
 				$columns_table[$index]['type_data']   = 'varchar';
 				$columns_table[$index]['field']       = $field;
 				$columns_table[$index]['field_raw']   = $field;
@@ -228,10 +239,17 @@ class CBController extends Controller {
 			}
 
 			if(strpos($field,'.')!==FALSE) {
-				$result->addselect($field);
+				if(!in_array($field, $selected_columns)){
+					$result->addselect($field);
+					$selected_columns[] = $field;
+				}
 			}else{
-				$result->addselect($table.'.'.$field);
+				if(!in_array($table.'.'.$field, $selected_columns)){
+					$result->addselect($table.'.'.$field);
+					$selected_columns[] = $table.'.'.$field;
+				}
 			}
+
 
 			$field_array = explode('.', $field);
 
@@ -295,20 +313,34 @@ class CBController extends Controller {
 				}
 
 			}else{
-
-				$result->addselect($table.'.'.$field);
+				if(!in_array($table.'.'.$field, $selected_columns)){
+					$result->addselect($table.'.'.$field);
+					$selected_columns[] = $table.'.'.$field;
+				}
 				$columns_table[$index]['type_data']	 = CRUDBooster::getFieldType($table,$field);
 				$columns_table[$index]['field']      = $field;
 				$columns_table[$index]['field_raw']  = $field;
 				$columns_table[$index]['field_with'] = $table.'.'.$field;
 			}
 		}
-
+		//dd($selected_columns);
+		//ie();
+		//dd($result->columns);
 		if($this->table_type == 'datatables') {
+
+			//dd($result->toSql());
+
 			//return datatables()->of($result)->toJson();
 
 			$datatables = datatables()->of($result);
+			$datatable_builder = datatables()->getHtmlBuilder();
 
+			if($this->button_bulk_action) {	
+			$datatable_builder->addCheckbox();
+				$datatables->editColumn('checkbox', function($row){
+					return '<input type="checkbox" class="checkbox" name="checkbox[]" value="'.$row->{$this->primary_key}.'" />';
+				});
+			}
 			/* set row class */
 			$table_row_color = $this->table_row_color;
 			$datatables->setRowClass(function ($row) use ($table_row_color, $html_contents) {
@@ -334,13 +366,16 @@ class CBController extends Controller {
 			/*column callback*/
 			$listed_column = array();
 			foreach($columns_table as $index => $col) {
-				$listed_column[] = $col['field_with'];
+				$listed_column[$col['field']]['title'] = $col['label'];
+				$datatable_builder->addColumn(['name' => $col['field_with'], 'data' => $col['field'], 'title' => $col['label'], 'footer' => $col['label'], 'width' => ($col['width'])?:"auto" ]);
+					
 
-				$datatables->editColumn($col['field_with'], function ($row) use ($columns_table, $col, $table) {
-
+				$datatables->editColumn($col['field'], function ($row) use ($columns_table, $col, $table) {
 					$value = e(@$row->{$col['field']});
+					
 					$title = @$row->{$this->title_field};
 					$label = $col['label'];
+
 					//$value = 'test ' . $row->{$col['field']};
 
 					if(isset($col['image'])) {
@@ -370,6 +405,8 @@ class CBController extends Controller {
 						$value = nl2br($value);
 					}
 
+
+
 					if($col['callback_php']) {
 						foreach($row as $k=>$v) {
 							$col['callback_php'] = str_replace("[".$k."]",$v,$col['callback_php']);
@@ -377,10 +414,14 @@ class CBController extends Controller {
 						@eval("\$value = ".$col['callback_php'].";");
 					}
 
+					
+
 			            //New method for callback
 					if(isset($col['callback'])) {
 						$value = call_user_func($col['callback'],$row);
 					}
+
+
 
 					$datavalue = @unserialize($value);
 					if ($datavalue !== false) {
@@ -401,29 +442,77 @@ class CBController extends Controller {
 				});
 
 
-				$datatables->removeColumn($col['field']);
+
+				//$datatables->removeColumn($col['field']);
 			}
 
+			//$listed_column = collect($columns_table);
 			//dd($columns_table);
+			if($this->button_table_action):
+			    $datatable_builder->addAction();
+
+		      	$button_action_style = $this->button_action_style;
+
+		      	//LISTING INDEX HTML
+				$addaction     = $this->data['addaction'];
+
+				if($this->sub_module) {
+					foreach($this->sub_module as $s) {
+						$table_parent = CRUDBooster::parseSqlTable($this->table)['table'];
+						$addaction[] = [
+							'label'=>$s['label'],
+							'icon'=>$s['button_icon'],
+							'url'=>CRUDBooster::adminPath($s['path']).'?parent_table='.$table_parent.'&parent_columns='.$s['parent_columns'].'&parent_columns_alias='.$s['parent_columns_alias'].'&parent_id=['.(!isset($s['custom_parent_id']) ? "id": $s['custom_parent_id']).']&return_url='.urlencode(Request::fullUrl()).'&foreign_key='.$s['foreign_key'].'&label='.urlencode($s['label']),
+							'color'=>$s['button_color'],
+		                                        'showIf'=>$s['showIf']
+						];
+					}
+				}
+		      	
+		      	$datatables->addColumn('action', function($row) use ($button_action_style, $addaction, $parent_field) {
+		      		$button_html = "<div class='button_action' style='text-align:right'>".view('crudbooster::components.action',compact('addaction','row','button_action_style','parent_field'))->render()."</div>";
+		      		return $button_html;
+		      	});
+
+          	endif;//button_table_action
 			if (datatables()->getRequest()->ajax()) {
-				$datatables->rawColumns($listed_column);
-		        return response()->json($datatables);
+				$datatables->escapeColumns([]);
+		        return $datatables->make(true);
+
 		    }
-			$data['datatables_html'] = datatables()
-										->getHtmlBuilder()
-										->columns($listed_column)
+
+		    //dd($datatable_builder);
+		    
+			$data['datatables_html'] = 	$datatable_builder
 										->parameters([
-					                        
+					                        'stateSave'	   => "true",
 					                        'buttons'      => ['export', 'print', 'reset', 'reload'],
 					                        'initComplete' => "function () {
 					                            this.api().columns().every(function () {
 					                                var column = this;
+					                                var header = column.header().outerHTML;
+
+					                                $(\"#dataTableBuilder #dataTablesCheckbox\").click(function() {
+										                var is_checked = $(this).is(\":checked\");
+										                $(\"#dataTableBuilder .checkbox\").prop(\"checked\",!is_checked).trigger(\"click\");
+										            });
+
+					                                if(header.indexOf('type=\"checkbox\"') !== -1 ){
+					                                	return;
+					                                }
+					                                if(header.indexOf('aria-label=\"Action\"') !== -1 ){
+					                                	return;
+					                                }
+
 					                                var input = document.createElement(\"input\");
 					                                input.style = \"width:90%\";
-					                                $(input).appendTo($(column.footer()).empty())
+					                                input.value = column.search();
+					                                $(input).appendTo($(column.footer()))
 					                                .on('change', function () {
 					                                    column.search($(this).val(), false, false, true).draw();
 					                                });
+
+					                                
 					                            });
 					                        }",
 					                    ]);
@@ -541,6 +630,7 @@ class CBController extends Controller {
 			}
 		}
 
+		//return datatables()->of($result)->make(true);
 		$data['columns'] = $columns_table;
 
 		if($this->index_return) return $data;

@@ -54,16 +54,6 @@
     </div>
     @endif
     
-    @if($table_type == 'datatables')
-      @push('bottom')
-         {!! $datatables_html->scripts() !!}
-      @endpush
-      <div class="box">
-        <div class="box-body table-responsive">
-          {!! $datatables_html->table(['class' => 'table table-bordered table-striped'], true) !!}
-       </div>
-      </div>
-    @else
     <div class="box">
       <div class="box-header">  
         @if($button_bulk_action && ( ($button_delete && CRUDBooster::isDelete()) || $button_selected) )
@@ -86,6 +76,12 @@
           </div><!--end-selected-action-->        
         </div><!--end-pull-left-->
         @endif
+
+        @if($table_type == 'datatables')
+          @push('bottom')
+             {!! $datatables_html->scripts() !!}
+          @endpush
+        @else
         <div class="box-tools pull-{{ trans('crudbooster.right') }}" style="position: relative;margin-top: -5px;margin-right: -10px">
           
               @if($button_filter)
@@ -131,15 +127,22 @@
             </form>
 
         </div> 
-
+        @endif
         <br style="clear:both"/>
 
       </div>
+      
+
+      @if($table_type == 'datatables')
+      <div class="box-body table-responsive no-padding">
+          {!! $datatables_html->table(['class' => 'table table-bordered table-striped'], true) !!}
+      </div>
+      @else
       <div class="box-body table-responsive no-padding">
         @include("crudbooster::default.table")
       </div>
+      @endif
     </div>
-    @endif
 
    @if(!is_null($post_index_html) && !empty($post_index_html))
        {!! $post_index_html !!}
