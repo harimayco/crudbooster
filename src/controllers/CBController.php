@@ -310,6 +310,7 @@ class CBController extends Controller {
 			if($this->table_type == 'datatables') {
 
 				$orderby_col = $this->table.'.'.$this->primary_key;
+				$orderby_field = $this->primary_key;
 				$orderby_sort = 'desc';
 
 				if($this->orderby) {
@@ -323,6 +324,7 @@ class CBController extends Controller {
 							}
 
 							$orderby_col = $orderby_table.'.'.$k;
+							$orderby_field = $k;
 							$orderby_sort = $v;
 						}
 					}else{
@@ -338,6 +340,7 @@ class CBController extends Controller {
 							}
 
 							$orderby_col = $orderby_table.'.'.$k;
+							$orderby_field = $k;
 							$orderby_sort = $v;
 						}
 					}
@@ -506,6 +509,7 @@ class CBController extends Controller {
 
 				//$datatables->removeColumn($col['field']);
 			}
+
 			//dd($sort_index_dt, $orderby_sort);
 			//$listed_column = collect($columns_table);
 			//dd($columns_table);
@@ -536,12 +540,18 @@ class CBController extends Controller {
 		      	});
 
           	endif;//button_table_action
+
+          	if(!$sort_index_dt){
+          		$datatables->addColumn($orderby_field, '{{$'.$orderby_field.'}}', 0);
+          		$datatables_builder->addColumnBefore(['name' =>$orderby_col, 'data' => $orderby_field, 'visible' =>false]);
+          	}
+
+
 			if (datatables()->getRequest()->ajax()) {
 				$datatables->escapeColumns([]);
 		        return $datatables->make(true);
 
 		    }
-
 		    
 			$data['datatables_html'] = 	$datatables_builder
 										->parameters([
@@ -559,7 +569,7 @@ class CBController extends Controller {
 										                $(\"#dataTableBuilder .checkbox\").prop(\"checked\",!is_checked).trigger(\"click\");
 										            });
 										
-													console.log(column.settings()[0].aoColumns[i].bSearchable);
+													//console.log(column.settings()[0].aoColumns[i].bSearchable);
 													if(!column.settings()[0].aoColumns[i].bSearchable){
 														i++;
 														return;
@@ -576,7 +586,7 @@ class CBController extends Controller {
 					                            });
 
 					                        }",
-					                        'order' => [ [ !$sort_index_dt ? $sort_default_index : $sort_index_dt, $orderby_sort] ]
+					                        'order' => [ [ !$sort_index_dt ? 0 : $sort_index_dt, $orderby_sort] ]
 					                    ]);
 		}
 
