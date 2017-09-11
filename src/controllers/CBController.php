@@ -355,13 +355,21 @@ class CBController extends Controller {
 			//return datatables()->of($result)->toJson();
 
 			$datatables = datatables()->of($result);
-			$datatable_builder = datatables()->getHtmlBuilder();
+			$datatables_builder = datatables()->getHtmlBuilder();
 
+			$col_pad = 0;
 			if($this->button_bulk_action) {	
-			$datatable_builder->addCheckbox();
+				$datatables_builder->addCheckbox();
 				$datatables->editColumn('checkbox', function($row){
 					return '<input type="checkbox" class="checkbox" name="checkbox[]" value="'.$row->{$this->primary_key}.'" />';
 				});
+				$col_pad++;
+			}
+
+			if($this->show_numbering) {
+				$datatables_builder->addIndex(['title' => 'No.']);
+				$datatables->addIndexColumn();
+				$col_pad++;
 			}
 			/* set row class */
 			$table_row_color = $this->table_row_color;
@@ -388,17 +396,16 @@ class CBController extends Controller {
 			/*column callback*/
 			$listed_column = array();
 			$sort_index_dt = 0;
-			$sort_default_index = 0;
+			$sort_default_index = $col_pad;
 			foreach($columns_table as $index => $col) {
 
-				if($this->button_bulk_action) {
-					$sort_index = $index + 1;
-					$sort_default_index = 1;
-				}
+				// if($this->button_bulk_action) {
+				// 	$sort_index = $index + 1;
+				// 	$sort_default_index = 1;
+				// }
 
 				if($col['field_with'] == $orderby_col){
-					
-					$sort_index_dt = $sort_index;
+					$sort_index_dt = $index + $col_pad;
 				}
 				
 				//dd($index);
@@ -418,7 +425,7 @@ class CBController extends Controller {
 					$orderable = false;
 				}
 
-				$datatable_builder->addColumn(['name' => $col_name, 'data' => $col['field_with'], 'title' => $col['label'], 'footer' => $col['label'], 'width' => ($col['width'])?:"auto", 'searchable' =>  $searchable, 'orderable' => 
+				$datatables_builder->addColumn(['name' => $col_name, 'data' => $col['field_with'], 'title' => $col['label'], 'footer' => $col['label'], 'width' => ($col['width'])?:"auto", 'searchable' =>  $searchable, 'orderable' => 
 				$orderable]);
 
 					
@@ -503,7 +510,7 @@ class CBController extends Controller {
 			//$listed_column = collect($columns_table);
 			//dd($columns_table);
 			if($this->button_table_action):
-			    $datatable_builder->addAction();
+			    $datatables_builder->addAction();
 
 		      	$button_action_style = $this->button_action_style;
 
@@ -536,12 +543,13 @@ class CBController extends Controller {
 		    }
 
 		    
-			$data['datatables_html'] = 	$datatable_builder
+			$data['datatables_html'] = 	$datatables_builder
 										->parameters([
 					                        'stateSave'	   => "true",
 					                        'buttons'      => ['export', 'print', 'reset', 'reload'],
 					                        'initComplete' => "function () {
 					                        	var i = 0;
+					                        	var _table = this;
 					                            this.api().columns().every(function () {
 					                                var column = this;
 					                                var header = column.header().outerHTML;
@@ -566,6 +574,7 @@ class CBController extends Controller {
 
 					                                i++;
 					                            });
+
 					                        }",
 					                        'order' => [ [ !$sort_index_dt ? $sort_default_index : $sort_index_dt, $orderby_sort] ]
 					                    ]);

@@ -135,7 +135,7 @@
 
       @if($table_type == 'datatables')
       <div class="box-body table-responsive">
-          {!! $datatables_html->table(['class' => 'table table-bordered table-striped table-hover'], true) !!}
+          {!! $datatables_html->table(['class' => 'table table-bordered table-striped table-hover', 'style' => 'width:100%'] , true) !!}
       </div>
       @else
       <div class="box-body table-responsive no-padding">
