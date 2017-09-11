@@ -183,12 +183,9 @@ class CBController extends Controller {
 		$data['date_candidate']   = $this->date_candidate;
 		$data['limit'] = $limit   = (Request::get('limit'))?Request::get('limit'):$this->limit;
 
-		$selected_columns = array();
-
 		$tablePK = $data['table_pk'];
 		$table_columns = CB::getTableColumns($this->table);
 		$result = DB::table($this->table)->select(DB::raw($this->table.".".$this->primary_key));
-		$selected_columns[] = $this->table.".".$this->primary_key;
 
 		if(Request::get('parent_id')) {
 			$table_parent = $this->table;
@@ -224,11 +221,7 @@ class CBController extends Controller {
 				$field = substr($field, strpos($field, ' as ')+4);
 				$field_with = (array_key_exists('join', $coltab))?str_replace(",",".",$coltab['join']):$field;
 
-				if(!in_array($coltab['name'], $selected_columns)){
-					$result->addselect(DB::raw($coltab['name']));
-					$selected_columns[] = $coltab['name'];
-
-				}
+				$result->addselect(DB::raw($coltab['name']));
 
 				$columns_table[$index]['type_data']   = 'varchar';
 				$columns_table[$index]['field']       = $field;
@@ -239,15 +232,9 @@ class CBController extends Controller {
 			}
 
 			if(strpos($field,'.')!==FALSE) {
-				if(!in_array($field, $selected_columns)){
-					$result->addselect($field);
-					$selected_columns[] = $field;
-				}
+				$result->addselect($field);
 			}else{
-				if(!in_array($table.'.'.$field, $selected_columns)){
-					$result->addselect($table.'.'.$field);
-					$selected_columns[] = $table.'.'.$field;
-				}
+				$result->addselect($table.'.'.$field);
 			}
 
 
@@ -279,7 +266,7 @@ class CBController extends Controller {
 				$join_table_columns = CRUDBooster::getTableColumns($join_table);
 				if($join_table_columns) {
 					foreach($join_table_columns as $jtc) {
-						$result->addselect($join_alias.'.'.$jtc.' as '.$join_alias.'_'.$jtc);
+							$result->addselect($join_alias.'.'.$jtc.' as '.$join_alias.'_'.$jtc);
 					}
 				}
 
@@ -313,21 +300,56 @@ class CBController extends Controller {
 				}
 
 			}else{
-				if(!in_array($table.'.'.$field, $selected_columns)){
-					$result->addselect($table.'.'.$field);
-					$selected_columns[] = $table.'.'.$field;
-				}
+				$result->addselect($table.'.'.$field);
 				$columns_table[$index]['type_data']	 = CRUDBooster::getFieldType($table,$field);
 				$columns_table[$index]['field']      = $field;
 				$columns_table[$index]['field_raw']  = $field;
 				$columns_table[$index]['field_with'] = $table.'.'.$field;
 			}
+
+			if($this->table_type == 'datatables') {
+
+				$orderby_col = $this->table.'.'.$this->primary_key;
+				$orderby_sort = 'desc';
+
+				if($this->orderby) {
+					if(is_array($this->orderby)) {
+						foreach($this->orderby as $k=>$v) {
+							if(strpos($k, '.')!==FALSE) {
+								$orderby_table = explode(".",$k)[0];
+								$k = explode(".",$k)[1];
+							}else{
+								$orderby_table = $table;
+							}
+
+							$orderby_col = $orderby_table.'.'.$k;
+							$orderby_sort = $v;
+						}
+					}else{
+						$temp_order_by = explode(";",$this->orderby);
+						foreach($temp_order_by as $o) {
+							$o = explode(",",$o);
+							$k = $o[0];
+							$v = $o[1];
+							if(strpos($k, '.')!==FALSE) {
+								$orderby_table = explode(".",$k)[0];
+							}else{
+								$orderby_table = $table;
+							}
+
+							$orderby_col = $orderby_table.'.'.$k;
+							$orderby_sort = $v;
+						}
+					}
+					
+				}
+
+			}
+
 		}
-		//dd($selected_columns);
 		//ie();
 		//dd($result->columns);
 		if($this->table_type == 'datatables') {
-
 			//dd($result->toSql());
 
 			//return datatables()->of($result)->toJson();
@@ -365,12 +387,44 @@ class CBController extends Controller {
 
 			/*column callback*/
 			$listed_column = array();
+			$sort_index_dt = 0;
+			$sort_default_index = 0;
 			foreach($columns_table as $index => $col) {
+
+				if($this->button_bulk_action) {
+					$sort_index = $index + 1;
+					$sort_default_index = 1;
+				}
+
+				if($col['field_with'] == $orderby_col){
+					
+					$sort_index_dt = $sort_index;
+				}
+				
+				//dd($index);
 				$listed_column[$col['field']]['title'] = $col['label'];
-				$datatable_builder->addColumn(['name' => $col['field_with'], 'data' => $col['field'], 'title' => $col['label'], 'footer' => $col['label'], 'width' => ($col['width'])?:"auto" ]);
+
+				$col_name = $col['field_with'];
+				$searchable = true;
+				$orderable = true;
+				if(@$col['is_subquery']){
+					$col_name = addslashes($col['name']);
+					$searchable = false;
+					$orderable = false;
+				}
+
+				if(isset($col['image'])){
+					$searchable = false;
+					$orderable = false;
+				}
+
+				$datatable_builder->addColumn(['name' => $col_name, 'data' => $col['field_with'], 'title' => $col['label'], 'footer' => $col['label'], 'width' => ($col['width'])?:"auto", 'searchable' =>  $searchable, 'orderable' => 
+				$orderable]);
+
 					
 
-				$datatables->editColumn($col['field'], function ($row) use ($columns_table, $col, $table) {
+				$datatables->editColumn($col_name, function ($row) use ($col, $table) {
+
 					$value = e(@$row->{$col['field']});
 					
 					$title = @$row->{$this->title_field};
@@ -445,7 +499,7 @@ class CBController extends Controller {
 
 				//$datatables->removeColumn($col['field']);
 			}
-
+			//dd($sort_index_dt, $orderby_sort);
 			//$listed_column = collect($columns_table);
 			//dd($columns_table);
 			if($this->button_table_action):
@@ -481,13 +535,13 @@ class CBController extends Controller {
 
 		    }
 
-		    //dd($datatable_builder);
 		    
 			$data['datatables_html'] = 	$datatable_builder
 										->parameters([
 					                        'stateSave'	   => "true",
 					                        'buttons'      => ['export', 'print', 'reset', 'reload'],
 					                        'initComplete' => "function () {
+					                        	var i = 0;
 					                            this.api().columns().every(function () {
 					                                var column = this;
 					                                var header = column.header().outerHTML;
@@ -496,25 +550,24 @@ class CBController extends Controller {
 										                var is_checked = $(this).is(\":checked\");
 										                $(\"#dataTableBuilder .checkbox\").prop(\"checked\",!is_checked).trigger(\"click\");
 										            });
-
-					                                if(header.indexOf('type=\"checkbox\"') !== -1 ){
-					                                	return;
-					                                }
-					                                if(header.indexOf('aria-label=\"Action\"') !== -1 ){
-					                                	return;
-					                                }
-
+										
+													console.log(column.settings()[0].aoColumns[i].bSearchable);
+													if(!column.settings()[0].aoColumns[i].bSearchable){
+														i++;
+														return;
+													}
 					                                var input = document.createElement(\"input\");
 					                                input.style = \"width:90%\";
 					                                input.value = column.search();
-					                                $(input).appendTo($(column.footer()))
+					                                $(input).appendTo($(column.footer()).empty())
 					                                .on('change', function () {
 					                                    column.search($(this).val(), false, false, true).draw();
 					                                });
 
-					                                
+					                                i++;
 					                            });
 					                        }",
+					                        'order' => [ [ !$sort_index_dt ? $sort_default_index : $sort_index_dt, $orderby_sort] ]
 					                    ]);
 		}
 
