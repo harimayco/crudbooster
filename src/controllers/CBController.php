@@ -588,7 +588,7 @@ class CBController extends Controller {
 
 					                        }",
 					                        'order' => [ [ !$sort_index_dt ? 0 : $sort_index_dt, $orderby_sort] ]
-					                    ]);
+					                    ])->ajax(['type' => 'POST', 'data' => '{"_method":"GET"}']);
 		}
 
 		if(Request::get('q')) {
