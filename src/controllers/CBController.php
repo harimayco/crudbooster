@@ -420,7 +420,7 @@ class CBController extends Controller {
 				if(@$col['is_subquery']){
 					$col_name = addslashes($col['name']);
 					$searchable = false;
-					$orderable = false;
+					$orderable = true;
 				}
 
 				if(isset($col['image'])){
@@ -556,7 +556,8 @@ class CBController extends Controller {
 			$data['datatables_html'] = 	$datatables_builder
 										->parameters([
 					                        'stateSave'	   => "true",
-					                        'buttons'      => ['export', 'print', 'reset', 'reload'],
+					                        'lengthMenu'=> [[5, 10, 20, 25, 50, 100, 200, -1], [5, 10, 20, 25, 50, 100, 200, 'All']],
+					                        'pageLength' =>  $this->limit,
 					                        'initComplete' => "function () {
 					                        	var i = 0;
 					                        	var _table = this;

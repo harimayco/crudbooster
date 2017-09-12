@@ -73,7 +73,10 @@
                 @endif
 
               </ul><!--end-dropdown-menu-->
-          </div><!--end-selected-action-->        
+          </div><!--end-selected-action--> 
+          @if($table_type == 'datatables')
+            <button class="btn btn-danger" onclick="localStorage.clear();location.href='{{Request::get("lasturl")}}'">{{trans('crudbooster.button_reset')}}</button>
+          @endif 
         </div><!--end-pull-left-->
         @endif
 
@@ -82,13 +85,12 @@
              {!! $datatables_html->scripts() !!}
           @endpush
         @else
-        <div class="box-tools pull-{{ trans('crudbooster.right') }}" style="position: relative;margin-top: -5px;margin-right: -10px">
-          
-              @if($button_filter)
+          <div class="box-tools pull-{{ trans('crudbooster.right') }}" style="position: relative;margin-top: -5px;margin-right: -10px">
+            @if($button_filter)
               <a style="margin-top:-23px" href="javascript:void(0)" id='btn_advanced_filter' data-url-parameter='{{$build_query}}' title='{{trans('crudbooster.filter_dialog_title')}}' class="btn btn-sm btn-default {{(Request::get('filter_column'))?'active':''}}">                               
                 <i class="fa fa-filter"></i> {{trans("crudbooster.button_filter")}}
               </a>
-              @endif
+            @endif
 
             <form method='get' style="display:inline-block;width: 260px;" action='{{Request::url()}}'>
                 <div class="input-group">
@@ -109,39 +111,29 @@
                   </div>
                 </div>
             </form>
-
-
-          <form method='get' id='form-limit-paging' style="display:inline-block" action='{{Request::url()}}'>                        
+            <form method='get' id='form-limit-paging' style="display:inline-block" action='{{Request::url()}}'>                        
               {!! CRUDBooster::getUrlParameters(['limit']) !!}
               <div class="input-group">
                 <select onchange="$('#form-limit-paging').submit()" name='limit' style="width: 56px;"  class='form-control input-sm'>
-                    <option {{($limit==5)?'selected':''}} value='5'>5</option> 
-                    <option {{($limit==10)?'selected':''}} value='10'>10</option>
-                    <option {{($limit==20)?'selected':''}} value='20'>20</option>
-                    <option {{($limit==25)?'selected':''}} value='25'>25</option>
-                    <option {{($limit==50)?'selected':''}} value='50'>50</option>
-                    <option {{($limit==100)?'selected':''}} value='100'>100</option>
-                    <option {{($limit==200)?'selected':''}} value='200'>200</option>
+                  <option {{($limit==5)?'selected':''}} value='5'>5</option> 
+                  <option {{($limit==10)?'selected':''}} value='10'>10</option>
+                  <option {{($limit==20)?'selected':''}} value='20'>20</option>
+                  <option {{($limit==25)?'selected':''}} value='25'>25</option>
+                  <option {{($limit==50)?'selected':''}} value='50'>50</option>
+                  <option {{($limit==100)?'selected':''}} value='100'>100</option>
+                  <option {{($limit==200)?'selected':''}} value='200'>200</option>
                 </select>                              
               </div>
             </form>
-
-        </div> 
-        @endif
+          </div> 
+         @endif
         <br style="clear:both"/>
 
       </div>
       
-
-      @if($table_type == 'datatables')
-      <div class="box-body table-responsive">
-          {!! $datatables_html->table(['class' => 'table table-bordered table-striped table-hover', 'style' => 'width:100%'] , true) !!}
-      </div>
-      @else
-      <div class="box-body table-responsive no-padding">
+      <div class="box-body table-responsive {{ ($table_type != 'datatables') ? 'no-padding' : '' }}">
         @include("crudbooster::default.table")
       </div>
-      @endif
     </div>
 
    @if(!is_null($post_index_html) && !empty($post_index_html))
