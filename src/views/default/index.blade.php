@@ -80,18 +80,15 @@
         </div><!--end-pull-left-->
         @endif
 
-        @if($table_type == 'datatables')
-          @push('bottom')
-             {!! $datatables_html->scripts() !!}
-          @endpush
-        @else
-          <div class="box-tools pull-{{ trans('crudbooster.right') }}" style="position: relative;margin-top: -5px;margin-right: -10px">
-            @if($button_filter)
-              <a style="margin-top:-23px" href="javascript:void(0)" id='btn_advanced_filter' data-url-parameter='{{$build_query}}' title='{{trans('crudbooster.filter_dialog_title')}}' class="btn btn-sm btn-default {{(Request::get('filter_column'))?'active':''}}">                               
-                <i class="fa fa-filter"></i> {{trans("crudbooster.button_filter")}}
-              </a>
-            @endif
+        
+        <div class="box-tools pull-{{ trans('crudbooster.right') }}" style="position: relative;margin-top: -5px;margin-right: -10px">
+          @if($button_filter)
+            <a style="margin-top:{{ ($table_type == 'datatables') ? "0px" : "-23px"  }}" href="javascript:void(0)" id='btn_advanced_filter' data-url-parameter='{{$build_query}}' title='{{trans('crudbooster.filter_dialog_title')}}' class="btn btn-sm btn-default {{(Request::get('filter_column'))?'active':''}}">                               
+              <i class="fa fa-filter"></i> {{trans("crudbooster.button_filter")}}
+            </a>
+          @endif
 
+          @if($table_type != 'datatables')
             <form method='get' style="display:inline-block;width: 260px;" action='{{Request::url()}}'>
                 <div class="input-group">
                   <input type="text" name="q" value="{{ Request::get('q') }}" class="form-control input-sm pull-{{ trans('crudbooster.right') }}" placeholder="{{trans('crudbooster.filter_search')}}"/>
@@ -125,8 +122,9 @@
                 </select>                              
               </div>
             </form>
-          </div> 
-         @endif
+          @endif
+        </div> 
+         
         <br style="clear:both"/>
 
       </div>
@@ -138,6 +136,12 @@
 
    @if(!is_null($post_index_html) && !empty($post_index_html))
        {!! $post_index_html !!}
+   @endif
+
+   @if($table_type == 'datatables')
+    @push('bottom')
+      {!! $datatables_html->scripts() !!}
+    @endpush
    @endif
 
 @endsection

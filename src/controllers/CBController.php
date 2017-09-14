@@ -313,6 +313,8 @@ class CBController extends Controller {
 				$orderby_field = $this->primary_key;
 				$orderby_sort = 'desc';
 
+				$order_by_columns = array();
+
 				if($this->orderby) {
 					if(is_array($this->orderby)) {
 						foreach($this->orderby as $k=>$v) {
@@ -326,6 +328,7 @@ class CBController extends Controller {
 							$orderby_col = $orderby_table.'.'.$k;
 							$orderby_field = $k;
 							$orderby_sort = $v;
+							$order_by_columns[] = array('col' => $orderby_col, 'sort' => $v);
 						}
 					}else{
 						$temp_order_by = explode(";",$this->orderby);
@@ -342,6 +345,7 @@ class CBController extends Controller {
 							$orderby_col = $orderby_table.'.'.$k;
 							$orderby_field = $k;
 							$orderby_sort = $v;
+							$order_by_columns[] = array('col' => $orderby_col, 'sort' => $v);
 						}
 					}
 					
@@ -350,6 +354,103 @@ class CBController extends Controller {
 			}
 
 		}
+		
+
+		if(Request::get('q')) {
+			$result->where(function($w) use ($columns_table, $request) {
+				foreach($columns_table as $col) {
+						if(!$col['field_with']) continue;
+						if($col['is_subquery']) continue;
+						$w->orwhere($col['field_with'],"like","%".Request::get("q")."%");
+				}
+			});
+		}
+
+		if(Request::get('where')) {
+			foreach(Request::get('where') as $k=>$v) {
+				$result->where($table.'.'.$k,$v);
+			}
+		}
+
+		$filter_is_orderby = false;
+		//parse_str(Request::get('advanced_filter'), $filter_column);
+
+		//$filter_column = $filter_column['filter_column'];
+
+		if(Request::get('filter_column')) {
+
+			$filter_column = Request::get('filter_column');
+
+			//dd($filter_column);
+
+			$result->where(function($w) use ($filter_column,$fc) {
+				foreach($filter_column as $key=>$fc) {
+
+					$value = @$fc['value'];
+					$type  = @$fc['type'];
+
+					if($type == 'empty') {
+						$w->whereNull($key)->orWhere($key,'');
+						continue;
+					}
+
+					if($value=='' || $type=='') continue;
+
+					if($type == 'between') continue;
+
+					switch($type) {
+						default:
+							if($key && $type && $value) $w->where($key,$type,$value);
+						break;
+						case 'like':
+						case 'not like':
+							$value = '%'.$value.'%';
+							if($key && $type && $value) $w->where($key,$type,$value);
+						break;
+						case 'in':
+						case 'not in':
+							if($value) {
+								$value = explode(',',$value);
+								if($key && $value) $w->whereIn($key,$value);
+							}
+						break;
+					}
+
+
+				}
+			});
+
+			$filter_column_datatable = array();
+			foreach($filter_column as $key=>$fc) {
+				$value = @$fc['value'];
+				$type  = @$fc['type'];
+				$sorting = @$fc['sorting'];
+
+				if($sorting!='') {
+					if($key) {
+						if(!Request::ajax()){
+							$result->orderby($key,$sorting);
+						}
+						$filter_column_datatable[] = array('col' => $key, 'sort' => $sorting);
+
+						
+						$filter_is_orderby = true;
+					}
+				}
+
+				if ($type=='between') {
+					if($key && $value) $result->whereBetween($key,$value);
+				}else{
+					continue;
+				}
+			}
+
+			if(count($filter_column_datatable)){
+				$order_by_columns = $filter_column_datatable;
+			}
+		}
+
+		$data['order_by_columns'] = $order_by_columns;
 		//ie();
 		//dd($result->columns);
 		if($this->table_type == 'datatables') {
@@ -548,16 +649,33 @@ class CBController extends Controller {
 
 
 			if (datatables()->getRequest()->ajax()) {
+				// echo($result->toSql());
+				// die();
 				$datatables->escapeColumns([]);
 		        return $datatables->make(true);
 
 		    }
+
+		    $data_columns_arr = $datatables_builder->getColumns()->toArray();
+		    $order_by_columns = collect($order_by_columns);
+		    //dd($order_by_columns);
+		    $orders = array();
+		    foreach($data_columns_arr as $key => $data_columns){
+		    	$find = $order_by_columns->where('col', $data_columns['name'])->first();
+		    	
+		    	if($find)
+		    		$orders[] = array($key, $find['sort']);
+		    }
 		    
+		    //echo json_encode($orders);
+		    //die();
 			$data['datatables_html'] = 	$datatables_builder
 										->parameters([
+											//'deferLoading' => 0,
 					                        'stateSave'	   => "true",
 					                        'lengthMenu'=> [[5, 10, 20, 25, 50, 100, 200, -1], [5, 10, 20, 25, 50, 100, 200, 'All']],
 					                        'pageLength' =>  $this->limit,
+					                        'order'	=> $orders,
 					                        'initComplete' => "function () {
 					                        	var i = 0;
 					                        	var _table = this;
@@ -586,86 +704,12 @@ class CBController extends Controller {
 					                                i++;
 					                            });
 
-					                        }",
-					                        'order' => [ [ !$sort_index_dt ? 0 : $sort_index_dt, $orderby_sort] ]
-					                    ])->ajax(['type' => 'POST', 'data' => '{"_method":"GET"}']);
-		}
+					                        
 
-		if(Request::get('q')) {
-			$result->where(function($w) use ($columns_table, $request) {
-				foreach($columns_table as $col) {
-						if(!$col['field_with']) continue;
-						if($col['is_subquery']) continue;
-						$w->orwhere($col['field_with'],"like","%".Request::get("q")."%");
-				}
-			});
-		}
-
-		if(Request::get('where')) {
-			foreach(Request::get('where') as $k=>$v) {
-				$result->where($table.'.'.$k,$v);
-			}
-		}
-
-		$filter_is_orderby = false;
-		if(Request::get('filter_column')) {
-
-			$filter_column = Request::get('filter_column');
-			$result->where(function($w) use ($filter_column,$fc) {
-				foreach($filter_column as $key=>$fc) {
-
-					$value = @$fc['value'];
-					$type  = @$fc['type'];
-
-					if($type == 'empty') {
-						$w->whereNull($key)->orWhere($key,'');
-						continue;
-					}
-
-					if($value=='' || $type=='') continue;
-
-					if($type == 'between') continue;
-
-					switch($type) {
-						default:
-							if($key && $type && $value) $w->where($key,$type,$value);
-						break;
-						case 'like':
-						case 'not like':
-							$value = '%'.$value.'%';
-							if($key && $type && $value) $w->where($key,$type,$value);
-						break;
-						case 'in':
-						case 'not in':
-							if($value) {
-								$value = explode(',',$value);
-								if($key && $value) $w->whereIn($key,$value);
-							}
-						break;
-					}
-
-
-				}
-			});
-
-			foreach($filter_column as $key=>$fc) {
-				$value = @$fc['value'];
-				$type  = @$fc['type'];
-				$sorting = @$fc['sorting'];
-
-				if($sorting!='') {
-					if($key) {
-						$result->orderby($key,$sorting);
-						$filter_is_orderby = true;
-					}
-				}
-
-				if ($type=='between') {
-					if($key && $value) $result->whereBetween($key,$value);
-				}else{
-					continue;
-				}
-			}
+					                        }"
+					                    ])->ajax(['type' => 'POST', 'data' => 'function(d){
+						                    d._method = "GET"; 
+						                }']);
 		}
 
 		if($filter_is_orderby == true) {
