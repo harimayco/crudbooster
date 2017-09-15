@@ -388,8 +388,8 @@
                     </div>
                     <div class="modal-footer" align="right">
                       <button class="btn btn-default" type="button" data-dismiss="modal">{{trans("crudbooster.button_close")}}</button>
-                      <button class="btn btn-default btn-reset" type="reset" onclick='location.href="{{Request::get("lasturl")}}"' >{{trans("crudbooster.button_reset")}}</button>
-                      <button class="btn btn-primary btn-submit" onclick="localStorage.removeItem('DataTables_{{ config('datatables-html.table.id') }}_' + window.location.pathname );" type="submit">{{trans("crudbooster.button_submit")}}</button>
+                      <button class="btn btn-default btn-reset" type="reset" onclick="localStorage.removeItem('DataTables_{{ config('datatables-html.table.id') }}_' + window.location.pathname );localStorage.removeItem('DataTables_{{ config('datatables-html.table.id') }}_' + (location.pathname+location.search).substr(1) );location.href='{{Request::get("lasturl")}}'" >{{trans("crudbooster.button_reset")}}</button>
+                      <button class="btn btn-primary btn-submit" type="submit">{{trans("crudbooster.button_submit")}}</button>
                     </div>
                     {!! CRUDBooster::getUrlParameters(['filter_column','lasturl']) !!}
                     <input type="hidden" name="lasturl" value="{{Request::get('lasturl')?:Request::fullUrl()}}">

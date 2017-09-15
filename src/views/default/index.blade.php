@@ -75,7 +75,7 @@
               </ul><!--end-dropdown-menu-->
           </div><!--end-selected-action--> 
           @if($table_type == 'datatables')
-            <button class="btn btn-danger" onclick="localStorage.removeItem('DataTables_{{ config('datatables-html.table.id') }}_' + window.location.pathname );location.href='{{Request::get("lasturl")}}'">{{trans('crudbooster.button_reset')}}</button>
+            <button class="btn btn-danger" onclick="localStorage.removeItem('DataTables_{{ config('datatables-html.table.id') }}_' + (location.pathname+location.search).substr(1) );location.reload();">{{trans('crudbooster.button_reset')}}</button>
           @endif 
         </div><!--end-pull-left-->
         @endif

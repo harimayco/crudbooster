@@ -669,13 +669,27 @@ class CBController extends Controller {
 		    
 		    //echo json_encode($orders);
 		    //die();
+
+		    /*state_key = window.location.pathname + "-" + USER_UID
+ 
+			"stateSaveCallback": function(settings,data) {
+			  localStorage.setItem( 'DataTables-'+settings.sInstance+state_key, JSON.stringify(data) )
+			},
+			"stateLoadCallback": function(settings) {
+			  return JSON.parse( localStorage.getItem( 'DataTables-'+settings.sInstance+state_key ) )}*/
+
 			$data['datatables_html'] = 	$datatables_builder
 										->parameters([
-											//'deferLoading' => 0,
-					                        'stateSave'	   => "true",
+					                        'stateSave'	   => true,
 					                        'lengthMenu'=> [[5, 10, 20, 25, 50, 100, 200, -1], [5, 10, 20, 25, 50, 100, 200, 'All']],
 					                        'pageLength' =>  $this->limit,
 					                        'order'	=> $orders,
+					                        'stateSaveCallback' => "function(settings,data){
+												localStorage.setItem( 'DataTables_'+settings.sInstance+'_'+(location.pathname+location.search).substr(1), JSON.stringify(data) );
+					                        }",
+					                        "stateLoadCallback" => "function(settings) {
+												 return JSON.parse( localStorage.getItem( 'DataTables_'+settings.sInstance+'_'+(location.pathname+location.search).substr(1) ) );
+					                        }",
 					                        'initComplete' => "function () {
 					                        	var i = 0;
 					                        	var _table = this;
