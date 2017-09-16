@@ -46,132 +46,136 @@
                   <form id='form-table' method='post' action='{{CRUDBooster::mainpath("action-selected")}}'>
                   <input type='hidden' name='button_name' value=''/>
                   <input type='hidden' name='_token' value='{{csrf_token()}}'/>
-                  <table id='table_dashboard' class="table table-hover table-striped table-bordered">
-                    <thead>
-                    <tr class="active">           
-                      <?php if($button_bulk_action):?>           
-                      <th width='3%'><input type='checkbox' id='checkall'/></th>
-                      <?php endif;?>
-                      <?php if($show_numbering):?>
-                      <th width="1%">{{ trans('crudbooster.no') }}</th>
-                      <?php endif;?>
-                      <?php                       
-                        foreach($columns as $col) {
-                            if($col['visible']===FALSE) continue;
-                            
-                            $sort_column = Request::get('filter_column');
-                            $colname = $col['label'];
-                            $name = $col['name'];
-                            $field = $col['field_with'];
-                            $width = ($col['width'])?:"auto";
-                            $mainpath = trim(CRUDBooster::mainpath(),'/').$build_query;
-                            echo "<th width='$width'>";
-                            if(isset($sort_column[$field])) {
-                              switch($sort_column[$field]['sorting']) {                                
-                                case 'asc': 
-                                  $url = CRUDBooster::urlFilterColumn($field,'sorting','desc');
-                                  echo "<a href='$url' title='Click to sort descending'>$colname &nbsp; <i class='fa fa-sort-desc'></i></a>";
-                                  break;
-                                case 'desc':
-                                  $url = CRUDBooster::urlFilterColumn($field,'sorting','asc');
-                                  echo "<a href='$url' title='Click to sort ascending'>$colname &nbsp; <i class='fa fa-sort-asc'></i></a>";
-                                  break;
-                                default:
-                                  $url = CRUDBooster::urlFilterColumn($field,'sorting','asc');
-                                  echo "<a href='$url' title='Click to sort ascending'>$colname &nbsp; <i class='fa fa-sort'></i></a>";
-                                  break;      
+                  @if($table_type == 'datatables')
+                    {!! $datatables_html->table(['class' => 'table table-bordered table-striped table-hover', 'style' => 'width:100%'] , true) !!}
+                  @else
+                    <table id='table_dashboard' class="table table-hover table-striped table-bordered">
+                      <thead>
+                      <tr class="active">           
+                        <?php if($button_bulk_action):?>           
+                        <th width='3%'><input type='checkbox' id='checkall'/></th>
+                        <?php endif;?>
+                        <?php if($show_numbering):?>
+                        <th width="1%">{{ trans('crudbooster.no') }}</th>
+                        <?php endif;?>
+                        <?php                       
+                          foreach($columns as $col) {
+                              if($col['visible']===FALSE) continue;
+                              
+                              $sort_column = Request::get('filter_column');
+                              $colname = $col['label'];
+                              $name = $col['name'];
+                              $field = $col['field_with'];
+                              $width = ($col['width'])?:"auto";
+                              $mainpath = trim(CRUDBooster::mainpath(),'/').$build_query;
+                              echo "<th width='$width'>";
+                              if(isset($sort_column[$field])) {
+                                switch($sort_column[$field]['sorting']) {                                
+                                  case 'asc': 
+                                    $url = CRUDBooster::urlFilterColumn($field,'sorting','desc');
+                                    echo "<a href='$url' title='Click to sort descending'>$colname &nbsp; <i class='fa fa-sort-desc'></i></a>";
+                                    break;
+                                  case 'desc':
+                                    $url = CRUDBooster::urlFilterColumn($field,'sorting','asc');
+                                    echo "<a href='$url' title='Click to sort ascending'>$colname &nbsp; <i class='fa fa-sort-asc'></i></a>";
+                                    break;
+                                  default:
+                                    $url = CRUDBooster::urlFilterColumn($field,'sorting','asc');
+                                    echo "<a href='$url' title='Click to sort ascending'>$colname &nbsp; <i class='fa fa-sort'></i></a>";
+                                    break;      
+                                }
+                              }else{     
+                                    $url = CRUDBooster::urlFilterColumn($field,'sorting','asc');                         
+                                    echo "<a href='$url' title='Click to sort ascending'>$colname &nbsp; <i class='fa fa-sort'></i></a>";                                  
                               }
-                            }else{     
-                                  $url = CRUDBooster::urlFilterColumn($field,'sorting','asc');                         
-                                  echo "<a href='$url' title='Click to sort ascending'>$colname &nbsp; <i class='fa fa-sort'></i></a>";                                  
-                            }
-                            
-                            
-                            echo "</th>";
-                        }
-                      ?>   
+                              
+                              
+                              echo "</th>";
+                          }
+                        ?>   
 
-                      @if($button_table_action)
-                        @if(CRUDBooster::isUpdate() || CRUDBooster::isDelete() || CRUDBooster::isRead())                     
-                            <th width='{{$button_action_width?:"auto"}}' style="text-align:right">{{trans("crudbooster.action_label")}}</th>
-                        @endif                   
-                      @endif                                            
-                    </tr>
-                    </thead>
-                    <tbody>
-                      @if(count($result)==0)
-                      <tr class='warning'>
-                          <?php if($button_bulk_action && $show_numbering):?>
-                          <td colspan='{{count($columns)+3}}' align="center">
-                          <?php elseif( ($button_bulk_action && !$show_numbering) || (!$button_bulk_action && $show_numbering) ):?>
-                          <td colspan='{{count($columns)+2}}' align="center">
-                          <?php else:?>
-                          <td colspan='{{count($columns)+1}}' align="center">
-                          <?php endif;?>
-                          
-                          <i class='fa fa-search'></i> {{trans("crudbooster.table_data_not_found")}}
-                          </td>
+                        @if($button_table_action)
+                          @if(CRUDBooster::isUpdate() || CRUDBooster::isDelete() || CRUDBooster::isRead())                     
+                              <th width='{{$button_action_width?:"auto"}}' style="text-align:right">{{trans("crudbooster.action_label")}}</th>
+                          @endif                   
+                        @endif                                            
                       </tr>
-                      @endif
+                      </thead>
+                      <tbody>
+                        @if(count($result)==0)
+                        <tr class='warning'>
+                            <?php if($button_bulk_action && $show_numbering):?>
+                            <td colspan='{{count($columns)+3}}' align="center">
+                            <?php elseif( ($button_bulk_action && !$show_numbering) || (!$button_bulk_action && $show_numbering) ):?>
+                            <td colspan='{{count($columns)+2}}' align="center">
+                            <?php else:?>
+                            <td colspan='{{count($columns)+1}}' align="center">
+                            <?php endif;?>
+                            
+                            <i class='fa fa-search'></i> {{trans("crudbooster.table_data_not_found")}}
+                            </td>
+                        </tr>
+                        @endif
 
-                      @foreach($html_contents['html'] as $i=>$hc)
-                          
-                          @if($table_row_color)         
-                            <?php $tr_color = NULL;?>                   
-                            @foreach($table_row_color as $trc)
-                              <?php
-                                  $query = $trc['condition'];
-                                  $color = $trc['color'];
-                                  $row = $html_contents['data'][$i]; 
-                                  foreach($row as $key=>$val) {
-                                    $query = str_replace("[".$key."]",'"'.$val.'"',$query);
-                                  }
+                        @foreach($html_contents['html'] as $i=>$hc)
+                            
+                            @if($table_row_color)         
+                              <?php $tr_color = NULL;?>                   
+                              @foreach($table_row_color as $trc)
+                                <?php
+                                    $query = $trc['condition'];
+                                    $color = $trc['color'];
+                                    $row = $html_contents['data'][$i]; 
+                                    foreach($row as $key=>$val) {
+                                      $query = str_replace("[".$key."]",'"'.$val.'"',$query);
+                                    }
 
-                                  @eval("if($query) {
-                                      \$tr_color = \$color;
-                                  }");
-                              ?>
-                            @endforeach
-                            <?php echo "<tr class='$tr_color'>";?>
-                          @else
-                            <tr>
-                          @endif
-                          
-                              @foreach($hc as $h)
-                                <td>{!! $h !!}</td>
+                                    @eval("if($query) {
+                                        \$tr_color = \$color;
+                                    }");
+                                ?>
                               @endforeach
-                          </tr>
-                      @endforeach
-                    </tbody>  
+                              <?php echo "<tr class='$tr_color'>";?>
+                            @else
+                              <tr>
+                            @endif
+                            
+                                @foreach($hc as $h)
+                                  <td>{!! $h !!}</td>
+                                @endforeach
+                            </tr>
+                        @endforeach
+                      </tbody>  
 
 
-                    <tfoot>
-                    <tr>           
-                      <?php if($button_bulk_action):?>           
-                      <th>&nbsp;</th>
-                      <?php endif;?>
+                      <tfoot>
+                      <tr>           
+                        <?php if($button_bulk_action):?>           
+                        <th>&nbsp;</th>
+                        <?php endif;?>
 
-                      <?php if($show_numbering):?>           
-                      <th>&nbsp;</th>
-                      <?php endif;?>
+                        <?php if($show_numbering):?>           
+                        <th>&nbsp;</th>
+                        <?php endif;?>
 
-                      <?php                       
-                        foreach($columns as $col) {
-                            if($col['visible']===FALSE) continue;
-                            $colname = $col['label'];
-                            $width = ($col['width'])?:"auto";
-                            echo "<th width='$width'>$colname</th>";
-                        }
-                      ?>   
+                        <?php                       
+                          foreach($columns as $col) {
+                              if($col['visible']===FALSE) continue;
+                              $colname = $col['label'];
+                              $width = ($col['width'])?:"auto";
+                              echo "<th width='$width'>$colname</th>";
+                          }
+                        ?>   
 
-                      @if($button_table_action)
-                        @if(CRUDBooster::isUpdate() || CRUDBooster::isDelete() || CRUDBooster::isRead())
-                        <th> - </th>
-                        @endif                   
-                      @endif                                            
-                    </tr>
-                    </tfoot>               
-                  </table>                                   
+                        @if($button_table_action)
+                          @if(CRUDBooster::isUpdate() || CRUDBooster::isDelete() || CRUDBooster::isRead())
+                          <th> - </th>
+                          @endif                   
+                        @endif                                            
+                      </tr>
+                      </tfoot>               
+                    </table>       
+                  @endif                            
 
                   </form><!--END FORM TABLE-->
 
@@ -384,7 +388,7 @@
                     </div>
                     <div class="modal-footer" align="right">
                       <button class="btn btn-default" type="button" data-dismiss="modal">{{trans("crudbooster.button_close")}}</button>
-                      <button class="btn btn-default btn-reset" type="reset" onclick='location.href="{{Request::get("lasturl")}}"' >{{trans("crudbooster.button_reset")}}</button>
+                      <button class="btn btn-default btn-reset" type="reset" onclick="localStorage.removeItem('DataTables_{{ config('datatables-html.table.id') }}_' + window.location.pathname );localStorage.removeItem('DataTables_{{ config('datatables-html.table.id') }}_' + (location.pathname+location.search).substr(1) );location.href='{{Request::get("lasturl")}}'" >{{trans("crudbooster.button_reset")}}</button>
                       <button class="btn btn-primary btn-submit" type="submit">{{trans("crudbooster.button_submit")}}</button>
                     </div>
                     {!! CRUDBooster::getUrlParameters(['filter_column','lasturl']) !!}
