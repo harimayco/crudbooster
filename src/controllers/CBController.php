@@ -1407,9 +1407,15 @@ class CBController extends Controller
 //         $this->arr[$this->primary_key] = $id = CRUDBooster::newId($this->table); //error on sql server
         $lastInsertId = $id = DB::table($this->table)->insertGetId($this->arr);
 
+        //var_dump($id); // RETURNS CORRECT ID
         //fix bug if primary key is uuid
-        if($this->arr[$this->primary_key]!=$id)
-            $id = $this->arr[$this->primary_key];
+        //if($this->arr[$this->primary_key]!=$id){
+        //    $id = $this->arr[$this->primary_key];
+        //}
+
+        //var_dump($id); // RETURNS NULL
+        //die();
+
 
         //Looping Data Input Again After Insert
         foreach ($this->data_inputan as $ro) {
@@ -1444,7 +1450,7 @@ class CBController extends Controller
             if ($ro['type'] == 'select2') {
                 if ($ro['relationship_table']) {
                     $datatable = explode(",", $ro['datatable'])[0];
-                    $foreignKey2 = CRUDBooster::getForeignKey($datatable, $ro['relationship_table']);
+                    $foreignKey2 = $ro['custom_fk'] ? $ro['custom_fk'] : CRUDBooster::getForeignKey($datatable, $ro['relationship_table']);
                     $foreignKey = CRUDBooster::getForeignKey($this->table, $ro['relationship_table']);
                     DB::table($ro['relationship_table'])->where($foreignKey, $id)->delete();
 
@@ -1585,7 +1591,7 @@ class CBController extends Controller
                 if ($ro['relationship_table'] && $ro["datatable_orig"] == "") {
                     $datatable = explode(",", $ro['datatable'])[0];
 
-                    $foreignKey2 = CRUDBooster::getForeignKey($datatable, $ro['relationship_table']);
+                    $foreignKey2 = $ro['custom_fk'] ? $ro['custom_fk'] : CRUDBooster::getForeignKey($datatable, $ro['relationship_table']);
                     $foreignKey = CRUDBooster::getForeignKey($this->table, $ro['relationship_table']);
                     DB::table($ro['relationship_table'])->where($foreignKey, $id)->delete();
 
@@ -1605,6 +1611,8 @@ class CBController extends Controller
                     if(!isset($params[2])) $params[2] = "id";
                     DB::table($params[0])->where($params[2], $id)->update([$params[1] => implode(",",$inputdata)]);
                 }
+
+
             }
 
             if ($ro['type'] == 'child') {
