@@ -37,7 +37,7 @@
             })
         </script>
     @endpush
-
+<form method="post" action="{{Route('ModulsControllerPostStep2')}}">
     <ul class="nav nav-tabs">
         @if($id)
             <li role="presentation" class="active"><a href="{{Route('ModulsControllerGetStep1',['id'=>$id])}}"><i class='fa fa-info'></i> Step 1 - Module
@@ -59,7 +59,7 @@
             <h3 class="box-title">Module Information</h3>
         </div>
         <div class="box-body">
-            <form method="post" action="{{Route('ModulsControllerPostStep2')}}">
+
                 <input type="hidden" name="_token" value="{{csrf_token()}}">
                 <input type="hidden" name="id" value="{{$row->id}}">
                 <div class="form-group">
@@ -105,8 +105,9 @@
                 <input type="submit" class="btn btn-primary" value="Step 2 &raquo;">
             </div>
         </div>
-        </form>
+
     </div>
+</form>
 
 
 @endsection

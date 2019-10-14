@@ -545,7 +545,7 @@ $name = str_slug($form['label'], '');
                                     }
                                 }
 
-                                $data_child = $data_child->orderby($form['table'].'.id', 'desc')->get();
+                                $data_child = $data_child->orderby($form['table'].'.id', 'asc')->get();
                                 foreach($data_child as $d):
                                 ?>
                                 <tr>

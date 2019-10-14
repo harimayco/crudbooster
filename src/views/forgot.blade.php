@@ -78,8 +78,9 @@
     </div><!-- /.login-box-body -->
 </div><!-- /.login-box -->
 
-<!-- jQuery 2.2.3 -->
+<!-- jQuery 2.2.3
 <script src="{{asset('vendor/crudbooster/assets/adminlte/plugins/jQuery/jquery-2.2.3.min.js')}}"></script>
+-->
 <!-- Bootstrap 3.4.1 JS -->
 <script src="{{asset('vendor/crudbooster/assets/adminlte/bootstrap/js/bootstrap.min.js')}}" type="text/javascript"></script>
 

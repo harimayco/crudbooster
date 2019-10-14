@@ -36,7 +36,7 @@
                         <a href='{{ ($menu->is_broken)?"javascript:alert('".trans('crudbooster.controller_route_404')."')":$menu->url }}'
                            class='{{($menu->color)?"text-".$menu->color:""}}'>
                             <i class='{{$menu->icon}} {{($menu->color)?"text-".$menu->color:""}}'></i> <span>{{$menu->name}}</span>
-                            @if(!empty($menu->children))<i class="fa fa-angle-{{ trans("crudbooster.right") }} pull-{{ trans("crudbooster.right") }}"></i>@endif
+                            @if(!empty($menu->children))<span class="pull-right-container"><i class="fa fa-angle-left pull-{{ trans("crudbooster.right") }}"></i></span>@endif
                         </a>
                         @if(!empty($menu->children))
                             <ul class="treeview-menu">
@@ -58,8 +58,12 @@
                 @if(CRUDBooster::isSuperadmin())
                     <li class="header">{{ trans('crudbooster.SUPERADMIN') }}</li>
                     <li class='treeview'>
-                        <a href='#'><i class='fa fa-key'></i> <span>{{ trans('crudbooster.Privileges_Roles') }}</span> <i
-                                    class="fa fa-angle-{{ trans("crudbooster.right") }} pull-{{ trans("crudbooster.right") }}"></i></a>
+                        <a href='#'><i class='fa fa-key'></i> <span>{{ trans('crudbooster.Privileges_Roles') }}</span>
+                            <span class="pull-right-container">
+                                <i
+                                    class="fa fa-angle-left pull-{{ trans("crudbooster.right") }}"></i>
+                            </span>
+                        </a>
                         <ul class='treeview-menu'>
                             <li class="{{ (Request::is(config('crudbooster.ADMIN_PATH').'/privileges/add*')) ? 'active' : '' }}"><a
                                         href='{{Route("PrivilegesControllerGetAdd")}}'>{{ $current_path }}<i class='fa fa-plus'></i>
@@ -72,7 +76,7 @@
 
                     <li class='treeview'>
                         <a href='#'><i class='fa fa-users'></i> <span>{{ trans('crudbooster.Users_Management') }}</span> <i
-                                    class="fa fa-angle-{{ trans("crudbooster.right") }} pull-{{ trans("crudbooster.right") }}"></i></a>
+                                    class="fa fa-angle-left pull-{{ trans("crudbooster.right") }}"></i></a>
                         <ul class='treeview-menu'>
                             <li class="{{ (Request::is(config('crudbooster.ADMIN_PATH').'/users/add*')) ? 'active' : '' }}"><a
                                         href='{{Route("AdminCmsUsersControllerGetAdd")}}'><i class='fa fa-plus'></i>
@@ -88,7 +92,7 @@
                             <span>{{ trans('crudbooster.Menu_Management') }}</span></a></li>
                     <li class="treeview">
                         <a href="#"><i class='fa fa-wrench'></i> <span>{{ trans('crudbooster.settings') }}</span> <i
-                                    class="fa fa-angle-{{ trans("crudbooster.right") }} pull-{{ trans("crudbooster.right") }}"></i></a>
+                                    class="fa fa-angle-left pull-{{ trans("crudbooster.right") }}"></i></a>
                         <ul class="treeview-menu">
                             <li class="{{ (Request::is(config('crudbooster.ADMIN_PATH').'/settings/add*')) ? 'active' : '' }}"><a
                                         href='{{route("SettingsControllerGetAdd")}}'><i class='fa fa-plus'></i>
@@ -105,7 +109,7 @@
                     </li>
                     <li class='treeview'>
                         <a href='#'><i class='fa fa-th'></i> <span>{{ trans('crudbooster.Module_Generator') }}</span> <i
-                                    class="fa fa-angle-{{ trans("crudbooster.right") }} pull-{{ trans("crudbooster.right") }}"></i></a>
+                                    class="fa fa-angle-left pull-{{ trans("crudbooster.right") }}"></i></a>
                         <ul class='treeview-menu'>
                             <li class="{{ (Request::is(config('crudbooster.ADMIN_PATH').'/module_generator/step1')) ? 'active' : '' }}"><a
                                         href='{{Route("ModulsControllerGetStep1")}}'><i class='fa fa-plus'></i>
@@ -118,7 +122,7 @@
 
                     <li class='treeview'>
                         <a href='#'><i class='fa fa-dashboard'></i> <span>{{ trans('crudbooster.Statistic_Builder') }}</span> <i
-                                    class="fa fa-angle-{{ trans("crudbooster.right") }} pull-{{ trans("crudbooster.right") }}"></i></a>
+                                    class="fa fa-angle-left pull-{{ trans("crudbooster.right") }}"></i></a>
                         <ul class='treeview-menu'>
                             <li class="{{ (Request::is(config('crudbooster.ADMIN_PATH').'/statistic_builder/add')) ? 'active' : '' }}"><a
                                         href='{{Route("StatisticBuilderControllerGetAdd")}}'><i class='fa fa-plus'></i>
@@ -131,7 +135,7 @@
 
                     <li class='treeview'>
                         <a href='#'><i class='fa fa-fire'></i> <span>{{ trans('crudbooster.API_Generator') }}</span> <i
-                                    class="fa fa-angle-{{ trans("crudbooster.right") }} pull-{{ trans("crudbooster.right") }}"></i></a>
+                                    class="fa fa-angle-left pull-{{ trans("crudbooster.right") }}"></i></a>
                         <ul class='treeview-menu'>
                             <li class="{{ (Request::is(config('crudbooster.ADMIN_PATH').'/api_generator/generator*')) ? 'active' : '' }}"><a
                                         href='{{Route("ApiCustomControllerGetGenerator")}}'><i class='fa fa-plus'></i>
@@ -147,7 +151,7 @@
 
                     <li class='treeview'>
                         <a href='#'><i class='fa fa-envelope-o'></i> <span>{{ trans('crudbooster.Email_Templates') }}</span> <i
-                                    class="fa fa-angle-{{ trans("crudbooster.right") }} pull-{{ trans("crudbooster.right") }}"></i></a>
+                                    class="fa fa-angle-{{ trans("crudbooster.left") }} pull-{{ trans("crudbooster.right") }}"></i></a>
                         <ul class='treeview-menu'>
                             <li class="{{ (Request::is(config('crudbooster.ADMIN_PATH').'/email_templates/add*')) ? 'active' : '' }}"><a
                                         href='{{Route("EmailTemplatesControllerGetAdd")}}'><i class='fa fa-plus'></i>
