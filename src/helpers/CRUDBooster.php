@@ -69,7 +69,7 @@ class CRUDBooster
             $file = Request::file($name);
             $ext = $file->getClientOriginalExtension();
             $filename = str_slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
-            $filesize = $file->getClientSize() / 1024;
+            $filesize = $file->getSize() / 1024;
             $file_path = 'uploads/'.$userID.'/'.date('Y-m');
 
             //Create Directory Monthly
