@@ -70,7 +70,7 @@ class ModulsController extends CBController
  				$('#table_name').change(function() {
 					var v = $(this).val();
 					$('#path').val(v);
-				})	
+				})
  			})
  			";
 

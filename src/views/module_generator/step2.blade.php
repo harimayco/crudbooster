@@ -293,7 +293,6 @@
             <form method="post" action="{{Route('ModulsControllerPostStep3')}}">
                 <input type="hidden" name="_token" value="{{csrf_token()}}">
                 <input type="hidden" name="id" value="{{$id}}">
-
                 <table class="table-display table table-striped">
                     <thead>
                     <tr>

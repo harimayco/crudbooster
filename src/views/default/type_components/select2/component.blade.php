@@ -4,7 +4,7 @@
         @push('bottom')
             <script type="text/javascript">
                 $(function () {
-                    $('#{{$name}}').select2();
+                    $('#{{$name}}').select2({ tags: {{@$form['tags_style'] ? 'true' : 'false' }}});
                 })
             </script>
         @endpush
@@ -99,7 +99,9 @@
             @push('bottom')
                 <script type="text/javascript">
                     $(function () {
-                        $('#{{$name}}').select2();
+                        $('#{{$name}}').select2({
+                            tags: true
+                        });
                     })
                 </script>
             @endpush
@@ -110,7 +112,9 @@
     @push('bottom')
         <script type="text/javascript">
             $(function () {
-                $('#{{$name}}').select2();
+                $('#{{$name}}').select2(
+                    { tags: true }
+                );
             })
         </script>
     @endpush
@@ -171,14 +175,18 @@
                         $value = explode(",", $value);
                     } else {
                         $foreignKey = CRUDBooster::getForeignKey($table, $form['relationship_table']);
-                        $foreignKey2 = CRUDBooster::getForeignKey($select_table, $form['relationship_table']);
+                        $foreignKey2 = $form['custom_fk'] ? $form['custom_fk'] : CRUDBooster::getForeignKey($select_table, $form['relationship_table']);
                         $value = DB::table($form['relationship_table'])->where($foreignKey, $id);
                         $value = $value->pluck($foreignKey2)->toArray();
                     }
-                    
+//dd($value);
+//die();
+                    Debugbar::info($value);
+
                     foreach ($result as $r) {
                         $option_label = $r->{$select_title};
                         $option_value = $r->id;
+
                         $selected = (is_array($value) && in_array($r->$pk, $value)) ? "selected" : "";
                         echo "<option $selected value='$option_value'>$option_label</option>";
                     }
