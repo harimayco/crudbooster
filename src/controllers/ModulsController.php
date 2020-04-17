@@ -1,4 +1,6 @@
-<?php namespace crocodicstudio\crudbooster\controllers;
+<?php
+
+namespace crocodicstudio\crudbooster\controllers;
 
 use CRUDBooster;
 use Illuminate\Support\Facades\DB;
@@ -45,14 +47,14 @@ class ModulsController extends CBController
                     continue;
                 }
 
-                $tables_list[] = $value."|".$label;
+                $tables_list[] = $value . "|" . $label;
             }
         }
         foreach ($tables as $tab) {
             foreach ($tab as $key => $value) {
-                $label = "[Default] ".$value;
+                $label = "[Default] " . $value;
                 if (substr($value, 0, 4) == 'cms_') {
-                    $tables_list[] = $value."|".$label;
+                    $tables_list[] = $value . "|" . $label;
                 }
             }
         }
@@ -174,7 +176,7 @@ class ModulsController extends CBController
         $this->addaction[] = [
             'label' => 'Module Wizard',
             'icon' => 'fa fa-wrench',
-            'url' => CRUDBooster::mainpath('step1').'/[id]',
+            'url' => CRUDBooster::mainpath('step1') . '/[id]',
             "showIf" => "[is_protected] == 0",
         ];
 
@@ -190,8 +192,8 @@ class ModulsController extends CBController
     function hook_before_delete($id)
     {
         $modul = DB::table('cms_moduls')->where('id', $id)->first();
-        $menus = DB::table('cms_menus')->where('path', 'like', '%'.$modul->controller.'%')->delete();
-        @unlink(app_path('Http/Controllers/'.$modul->controller.'.php'));
+        $menus = DB::table('cms_menus')->where('path', 'like', '%' . $modul->controller . '%')->delete();
+        @unlink(app_path('Http/Controllers/' . $modul->controller . '.php'));
     }
 
     public function getTableColumns($table)
@@ -215,7 +217,7 @@ class ModulsController extends CBController
 
         $module = CRUDBooster::getCurrentModule();
 
-        if (! CRUDBooster::isView() && $this->global_privilege == false) {
+        if (!CRUDBooster::isView() && $this->global_privilege == false) {
             CRUDBooster::insertLog(trans('crudbooster.log_try_view', ['module' => $module->name]));
             CRUDBooster::redirect(CRUDBooster::adminPath(), trans('crudbooster.denied_access'));
         }
@@ -223,13 +225,17 @@ class ModulsController extends CBController
         return redirect()->route("ModulsControllerGetStep1");
     }
 
-    public function getStep1($id = 0)
+    public function getStep1($id = null)
     {
+        if (is_null($id)) {
+            $id = request()->id;
+        }
+
         $this->cbLoader();
 
         $module = CRUDBooster::getCurrentModule();
 
-        if (! CRUDBooster::isView() && $this->global_privilege == false) {
+        if (!CRUDBooster::isView() && $this->global_privilege == false) {
             CRUDBooster::insertLog(trans('crudbooster.log_try_view', ['module' => $module->name]));
             CRUDBooster::redirect(CRUDBooster::adminPath(), trans('crudbooster.denied_access'));
         }
@@ -258,13 +264,16 @@ class ModulsController extends CBController
         return view("crudbooster::module_generator.step1", compact("tables_list", "fontawesome", "row", "id"));
     }
 
-    public function getStep2($id)
+    public function getStep2($id = null)
     {
+        if (is_null($id)) {
+            $id = request()->id;
+        }
         $this->cbLoader();
 
         $module = CRUDBooster::getCurrentModule();
 
-        if (! CRUDBooster::isView() && $this->global_privilege == false) {
+        if (!CRUDBooster::isView() && $this->global_privilege == false) {
             CRUDBooster::insertLog(trans('crudbooster.log_try_view', ['module' => $module->name]));
             CRUDBooster::redirect(CRUDBooster::adminPath(), trans('crudbooster.denied_access'));
         }
@@ -282,8 +291,8 @@ class ModulsController extends CBController
             }
         }
 
-        if (file_exists(app_path('Http/Controllers/'.str_replace('.', '', $row->controller).'.php'))) {
-            $response = file_get_contents(app_path('Http/Controllers/'.$row->controller.'.php'));
+        if (file_exists(app_path('Http/Controllers/' . str_replace('.', '', $row->controller) . '.php'))) {
+            $response = file_get_contents(app_path('Http/Controllers/' . $row->controller . '.php'));
             $column_datas = extract_unit($response, "# START COLUMNS DO NOT REMOVE THIS LINE", "# END COLUMNS DO NOT REMOVE THIS LINE");
             $column_datas = str_replace('$this->', '$cb_', $column_datas);
             eval($column_datas);
@@ -304,7 +313,7 @@ class ModulsController extends CBController
 
         $module = CRUDBooster::getCurrentModule();
 
-        if (! CRUDBooster::isView() && $this->global_privilege == false) {
+        if (!CRUDBooster::isView() && $this->global_privilege == false) {
             CRUDBooster::insertLog(trans('crudbooster.log_try_view', ['module' => $module->name]));
             CRUDBooster::redirect(CRUDBooster::adminPath(), trans('crudbooster.denied_access'));
         }
@@ -314,7 +323,7 @@ class ModulsController extends CBController
         $icon = Request::get('icon');
         $path = Request::get('path');
 
-        if (! Request::get('id')) {
+        if (!Request::get('id')) {
 
             if (DB::table('cms_moduls')->where('path', $path)->where('deleted_at', null)->count()) {
                 return redirect()->back()->with(['message' => 'Sorry the slug has already exists, please choose another !', 'message_type' => 'warning']);
@@ -335,7 +344,7 @@ class ModulsController extends CBController
                     'created_at' => date('Y-m-d H:i:s'),
                     'name' => $name,
                     'icon' => $icon,
-                    'path' => $controller.'GetIndex',
+                    'path' => $controller . 'GetIndex',
                     'type' => 'Route',
                     'is_active' => 1,
                     'id_cms_privileges' => CRUDBooster::myPrivilegeId(),
@@ -368,10 +377,10 @@ class ModulsController extends CBController
 
             $row = DB::table('cms_moduls')->where('id', $id)->first();
 
-            if (file_exists(app_path('Http/Controllers/'.$row->controller.'.php'))) {
-                $response = file_get_contents(app_path('Http/Controllers/'.str_replace('.', '', $row->controller).'.php'));
+            if (file_exists(app_path('Http/Controllers/' . $row->controller . '.php'))) {
+                $response = file_get_contents(app_path('Http/Controllers/' . str_replace('.', '', $row->controller) . '.php'));
             } else {
-                $response = file_get_contents(__DIR__.'/'.str_replace('.', '', $row->controller).'.php');
+                $response = file_get_contents(__DIR__ . '/' . str_replace('.', '', $row->controller) . '.php');
             }
 
             if (strpos($response, "# START COLUMNS") !== true) {
@@ -388,7 +397,7 @@ class ModulsController extends CBController
 
         $module = CRUDBooster::getCurrentModule();
 
-        if (! CRUDBooster::isView() && $this->global_privilege == false) {
+        if (!CRUDBooster::isView() && $this->global_privilege == false) {
             CRUDBooster::insertLog(trans('crudbooster.log_try_view', ['module' => $module->name]));
             CRUDBooster::redirect(CRUDBooster::adminPath(), trans('crudbooster.denied_access'));
         }
@@ -409,15 +418,15 @@ class ModulsController extends CBController
         $script_cols = [];
         foreach ($column as $col) {
 
-            if (! $name[$i]) {
+            if (!$name[$i]) {
                 $i++;
                 continue;
             }
 
-            $script_cols[$i] = "\t\t\t".'$this->col[] = ["label"=>"'.$col.'","name"=>"'.$name[$i].'"';
+            $script_cols[$i] = "\t\t\t" . '$this->col[] = ["label"=>"' . $col . '","name"=>"' . $name[$i] . '"';
 
             if ($join_table[$i] && $join_field[$i]) {
-                $script_cols[$i] .= ',"join"=>"'.$join_table[$i].','.$join_field[$i].'"';
+                $script_cols[$i] .= ',"join"=>"' . $join_table[$i] . ',' . $join_field[$i] . '"';
             }
 
             if ($is_image[$i]) {
@@ -429,11 +438,11 @@ class ModulsController extends CBController
             }
 
             if ($width[$i]) {
-                $script_cols[$i] .= ',"width"=>"'.$width[$i].'"';
+                $script_cols[$i] .= ',"width"=>"' . $width[$i] . '"';
             }
 
             if ($callbackphp[$i]) {
-                $script_cols[$i] .= ',"callback_php"=>\''.$callbackphp[$i].'\'';
+                $script_cols[$i] .= ',"callback_php"=>\'' . $callbackphp[$i] . '\'';
             }
 
             $script_cols[$i] .= "];";
@@ -442,29 +451,32 @@ class ModulsController extends CBController
         }
 
         $scripts = implode("\n", $script_cols);
-        $raw = file_get_contents(app_path('Http/Controllers/'.$row->controller.'.php'));
+        $raw = file_get_contents(app_path('Http/Controllers/' . $row->controller . '.php'));
         $raw = explode("# START COLUMNS DO NOT REMOVE THIS LINE", $raw);
         $rraw = explode("# END COLUMNS DO NOT REMOVE THIS LINE", $raw[1]);
 
-        $file_controller = trim($raw[0])."\n\n";
+        $file_controller = trim($raw[0]) . "\n\n";
         $file_controller .= "\t\t\t# START COLUMNS DO NOT REMOVE THIS LINE\n";
-        $file_controller .= "\t\t\t".'$this->col = [];'."\n";
-        $file_controller .= $scripts."\n";
+        $file_controller .= "\t\t\t" . '$this->col = [];' . "\n";
+        $file_controller .= $scripts . "\n";
         $file_controller .= "\t\t\t# END COLUMNS DO NOT REMOVE THIS LINE\n\n";
-        $file_controller .= "\t\t\t".trim($rraw[1]);
+        $file_controller .= "\t\t\t" . trim($rraw[1]);
 
-        file_put_contents(app_path('Http/Controllers/'.$row->controller.'.php'), $file_controller);
+        file_put_contents(app_path('Http/Controllers/' . $row->controller . '.php'), $file_controller);
 
         return redirect(Route("ModulsControllerGetStep3", ["id" => $id]));
     }
 
-    public function getStep3($id)
+    public function getStep3($id = null)
     {
+        if (is_null($id)) {
+            $id = request()->id;
+        }
         $this->cbLoader();
 
         $module = CRUDBooster::getCurrentModule();
 
-        if (! CRUDBooster::isView() && $this->global_privilege == false) {
+        if (!CRUDBooster::isView() && $this->global_privilege == false) {
             CRUDBooster::insertLog(trans('crudbooster.log_try_view', ['module' => $module->name]));
             CRUDBooster::redirect(CRUDBooster::adminPath(), trans('crudbooster.denied_access'));
         }
@@ -473,15 +485,15 @@ class ModulsController extends CBController
 
         $columns = CRUDBooster::getTableColumns($row->table_name);
 
-        if (file_exists(app_path('Http/Controllers/'.$row->controller.'.php'))) {
-            $response = file_get_contents(app_path('Http/Controllers/'.$row->controller.'.php'));
+        if (file_exists(app_path('Http/Controllers/' . $row->controller . '.php'))) {
+            $response = file_get_contents(app_path('Http/Controllers/' . $row->controller . '.php'));
             $column_datas = extract_unit($response, "# START FORM DO NOT REMOVE THIS LINE", "# END FORM DO NOT REMOVE THIS LINE");
             $column_datas = str_replace('$this->', '$cb_', $column_datas);
             eval($column_datas);
         }
 
         $types = [];
-        foreach (glob(base_path('vendor/crocodicstudio/crudbooster/src/views/default/type_components').'/*', GLOB_ONLYDIR) as $dir) {
+        foreach (glob(base_path('vendor/crocodicstudio/crudbooster/src/views/default/type_components') . '/*', GLOB_ONLYDIR) as $dir) {
             $types[] = basename($dir);
         }
 
@@ -491,7 +503,7 @@ class ModulsController extends CBController
     public function getTypeInfo($type = 'text')
     {
         header("Content-Type: application/json");
-        echo file_get_contents(base_path('vendor/crocodicstudio/crudbooster/src/views/default/type_components/'.$type.'/info.json'));
+        echo file_get_contents(base_path('vendor/crocodicstudio/crudbooster/src/views/default/type_components/' . $type . '/info.json'));
     }
 
     public function postStep4()
@@ -532,14 +544,14 @@ class ModulsController extends CBController
                     }
                 }
 
-                $script_form[$i] = "\t\t\t".'$this->form[] = '.min_var_export($form).";";
+                $script_form[$i] = "\t\t\t" . '$this->form[] = ' . min_var_export($form) . ";";
             }
 
             $i++;
         }
 
         $scripts = implode("\n", $script_form);
-        $raw = file_get_contents(app_path('Http/Controllers/'.$row->controller.'.php'));
+        $raw = file_get_contents(app_path('Http/Controllers/' . $row->controller . '.php'));
         $raw = explode("# START FORM DO NOT REMOVE THIS LINE", $raw);
         $rraw = explode("# END FORM DO NOT REMOVE THIS LINE", $raw[1]);
 
@@ -557,40 +569,43 @@ class ModulsController extends CBController
         }
 
         //ARRANGE THE FULL SCRIPT
-        $file_controller = $top_script."\n\n";
+        $file_controller = $top_script . "\n\n";
         $file_controller .= "\t\t\t# START FORM DO NOT REMOVE THIS LINE\n";
-        $file_controller .= "\t\t\t".'$this->form = [];'."\n";
-        $file_controller .= $scripts."\n";
+        $file_controller .= "\t\t\t" . '$this->form = [];' . "\n";
+        $file_controller .= $scripts . "\n";
         $file_controller .= "\t\t\t# END FORM DO NOT REMOVE THIS LINE\n\n";
 
         //CREATE A BACKUP SCAFFOLDING TO OLD TAG
         if ($current_scaffolding_form) {
             $current_scaffolding_form = preg_split("/\\r\\n|\\r|\\n/", $current_scaffolding_form);
             foreach ($current_scaffolding_form as &$c) {
-                $c = "\t\t\t//".trim($c);
+                $c = "\t\t\t//" . trim($c);
             }
             $current_scaffolding_form = implode("\n", $current_scaffolding_form);
 
             $file_controller .= "\t\t\t# OLD START FORM\n";
-            $file_controller .= $current_scaffolding_form."\n";
+            $file_controller .= $current_scaffolding_form . "\n";
             $file_controller .= "\t\t\t# OLD END FORM\n\n";
         }
 
-        $file_controller .= "\t\t\t".trim($bottom_script);
+        $file_controller .= "\t\t\t" . trim($bottom_script);
 
         //CREATE FILE CONTROLLER
-        file_put_contents(app_path('Http/Controllers/'.$row->controller.'.php'), $file_controller);
+        file_put_contents(app_path('Http/Controllers/' . $row->controller . '.php'), $file_controller);
 
         return redirect(Route("ModulsControllerGetStep4", ["id" => $id]));
     }
 
-    public function getStep4($id)
+    public function getStep4($id = null)
     {
+        if (is_null($id)) {
+            $id = request()->id;
+        }
         $this->cbLoader();
 
         $module = CRUDBooster::getCurrentModule();
 
-        if (! CRUDBooster::isView() && $this->global_privilege == false) {
+        if (!CRUDBooster::isView() && $this->global_privilege == false) {
             CRUDBooster::insertLog(trans('crudbooster.log_try_view', ['module' => $module->name]));
             CRUDBooster::redirect(CRUDBooster::adminPath(), trans('crudbooster.denied_access'));
         }
@@ -599,8 +614,8 @@ class ModulsController extends CBController
 
         $data = [];
         $data['id'] = $id;
-        if (file_exists(app_path('Http/Controllers/'.$row->controller.'.php'))) {
-            $response = file_get_contents(app_path('Http/Controllers/'.$row->controller.'.php'));
+        if (file_exists(app_path('Http/Controllers/' . $row->controller . '.php'))) {
+            $response = file_get_contents(app_path('Http/Controllers/' . $row->controller . '.php'));
             $column_datas = extract_unit($response, "# START CONFIGURATION DO NOT REMOVE THIS LINE", "# END CONFIGURATION DO NOT REMOVE THIS LINE");
             $column_datas = str_replace('$this->', '$data[\'cb_', $column_datas);
             $column_datas = str_replace(' = ', '\'] = ', $column_datas);
@@ -630,7 +645,7 @@ class ModulsController extends CBController
             }
 
             if ($val != 'true' && $val != 'false') {
-                $value = '"'.$val.'"';
+                $value = '"' . $val . '"';
             } else {
                 $value = $val;
             }
@@ -639,22 +654,22 @@ class ModulsController extends CBController
             // 	$value = ;
             // }
 
-            $script_config[$i] = "\t\t\t".'$this->'.$key.' = '.$value.';';
+            $script_config[$i] = "\t\t\t" . '$this->' . $key . ' = ' . $value . ';';
             $i++;
         }
 
         $scripts = implode("\n", $script_config);
-        $raw = file_get_contents(app_path('Http/Controllers/'.$row->controller.'.php'));
+        $raw = file_get_contents(app_path('Http/Controllers/' . $row->controller . '.php'));
         $raw = explode("# START CONFIGURATION DO NOT REMOVE THIS LINE", $raw);
         $rraw = explode("# END CONFIGURATION DO NOT REMOVE THIS LINE", $raw[1]);
 
-        $file_controller = trim($raw[0])."\n\n";
+        $file_controller = trim($raw[0]) . "\n\n";
         $file_controller .= "\t\t\t# START CONFIGURATION DO NOT REMOVE THIS LINE\n";
-        $file_controller .= $scripts."\n";
+        $file_controller .= $scripts . "\n";
         $file_controller .= "\t\t\t# END CONFIGURATION DO NOT REMOVE THIS LINE\n\n";
-        $file_controller .= "\t\t\t".trim($rraw[1]);
+        $file_controller .= "\t\t\t" . trim($rraw[1]);
 
-        file_put_contents(app_path('Http/Controllers/'.$row->controller.'.php'), $file_controller);
+        file_put_contents(app_path('Http/Controllers/' . $row->controller . '.php'), $file_controller);
 
         return redirect()->route('ModulsControllerGetIndex')->with(['message' => trans('crudbooster.alert_update_data_success'), 'message_type' => 'success']);
     }
@@ -663,7 +678,7 @@ class ModulsController extends CBController
     {
         $this->cbLoader();
 
-        if (! CRUDBooster::isCreate() && $this->global_privilege == false) {
+        if (!CRUDBooster::isCreate() && $this->global_privilege == false) {
             CRUDBooster::insertLog(trans('crudbooster.log_try_add_save', [
                 'name' => Request::input($this->title_field),
                 'module' => CRUDBooster::getCurrentModule()->name,
@@ -705,7 +720,7 @@ class ModulsController extends CBController
                 'created_at' => date('Y-m-d H:i:s'),
                 'name' => trans("crudbooster.text_default_add_new_module", ['module' => $this->arr['name']]),
                 'icon' => 'fa fa-plus',
-                'path' => $this->arr['controller'].'GetAdd',
+                'path' => $this->arr['controller'] . 'GetAdd',
                 'type' => 'Route',
                 'is_active' => 1,
                 'id_cms_privileges' => CRUDBooster::myPrivilegeId(),
@@ -717,7 +732,7 @@ class ModulsController extends CBController
                 'created_at' => date('Y-m-d H:i:s'),
                 'name' => trans("crudbooster.text_default_list_module", ['module' => $this->arr['name']]),
                 'icon' => 'fa fa-bars',
-                'path' => $this->arr['controller'].'GetIndex',
+                'path' => $this->arr['controller'] . 'GetIndex',
                 'type' => 'Route',
                 'is_active' => 1,
                 'id_cms_privileges' => CRUDBooster::myPrivilegeId(),
@@ -762,7 +777,7 @@ class ModulsController extends CBController
 
         $row = DB::table($this->table)->where($this->primary_key, $id)->first();
 
-        if (! CRUDBooster::isUpdate() && $this->global_privilege == false) {
+        if (!CRUDBooster::isUpdate() && $this->global_privilege == false) {
             CRUDBooster::insertLog(trans("crudbooster.log_try_add", ['name' => $row->{$this->title_field}, 'module' => CRUDBooster::getCurrentModule()->name]));
             CRUDBooster::redirect(CRUDBooster::adminPath(), trans('crudbooster.denied_access'));
         }
