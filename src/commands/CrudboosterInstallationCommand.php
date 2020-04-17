@@ -1,4 +1,6 @@
-<?php namespace crocodicstudio\crudbooster\commands;
+<?php
+
+namespace crocodicstudio\crudbooster\commands;
 
 use App;
 use Cache;
@@ -48,7 +50,7 @@ class CrudboosterInstallationCommand extends Command
 
         if ($this->confirm('Do you have setting the database configuration at .env ?')) {
 
-            if (! file_exists(public_path('vendor'))) {
+            if (!file_exists(public_path('vendor'))) {
                 mkdir(public_path('vendor'), 0777);
             }
 
@@ -74,14 +76,14 @@ class CrudboosterInstallationCommand extends Command
 
             $this->info('Dumping the autoloaded files and reloading all new files...');
             $composer = $this->findComposer();
-            $process = new Process($composer.' dumpautoload');
+            $process = new Process([$composer, 'dump']);
             $process->setWorkingDirectory(base_path())->run();
 
             $this->info('Migrating database...');
             $this->call('migrate');
 
-            if (! class_exists('CBSeeder')) {
-                require_once __DIR__.'/../database/seeds/CBSeeder.php';
+            if (!class_exists('CBSeeder')) {
+                require_once __DIR__ . '/../database/seeds/CBSeeder.php';
             }
             $this->call('db:seed', ['--class' => 'CBSeeder']);
             $this->call('config:clear');
@@ -128,7 +130,7 @@ class CrudboosterInstallationCommand extends Command
         if (version_compare(phpversion(), '5.6.0', '>=')) {
             $this->info('PHP Version (>= 5.6.*): [Good]');
         } else {
-            $this->info('PHP Version (>= 5.6.*): [Bad] Yours: '.phpversion());
+            $this->info('PHP Version (>= 5.6.*): [Bad] Yours: ' . phpversion());
             $system_failed++;
         }
 
@@ -217,8 +219,8 @@ class CrudboosterInstallationCommand extends Command
      */
     protected function findComposer()
     {
-        if (file_exists(getcwd().'/composer.phar')) {
-            return '"'.PHP_BINARY.'" '.getcwd().'/composer.phar';
+        if (file_exists(getcwd() . '/composer.phar')) {
+            return '"' . PHP_BINARY . '" ' . getcwd() . '/composer.phar';
         }
 
         return 'composer';
