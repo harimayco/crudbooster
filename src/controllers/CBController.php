@@ -551,6 +551,13 @@ class CBController extends Controller
         $html_contents = [];
         $page = (Request::get('page')) ? Request::get('page') : 1;
         $number = ($page - 1) * $limit + 1;
+        if ($this->show_numbering) {
+            $sort=strtolower(next(explode(",",$this->show_numbering)));
+            if($sort == "desc"){
+                $total= $data['result']->total();
+                $number=$total-($page-1)*$limit;
+            }
+        }
         foreach ($data['result'] as $row) {
             $html_content = [];
 
@@ -560,8 +567,13 @@ class CBController extends Controller
             }
 
             if ($this->show_numbering) {
-                $html_content[] = $number.'. ';
-                $number++;
+                if($sort == "desc"){
+                    $html_content[] = $number.'. ';
+                    $number--;
+                }else{
+                    $html_content[] = $number.'. ';
+                    $number++;
+                }
             }
 
             foreach ($columns_table as $col) {
