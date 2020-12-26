@@ -99,68 +99,63 @@
                         </div>
                     @endif
                     @if($button_date_filter)
-                        <?php $grid_col = $grid_col - 5; ?>
-                        <div class="col-sm-5">
-                            <div class="box-tools pull-{{ trans('crudbooster.left') }}">
-                                <div class="row">
-                                    <form method='get' action='{{Request::url()}}'>
-                                        <input type="hidden" name="filter_column[{{$table}}.created_at][type]"
-                                               value="between">
-                                        <input type="hidden" name="last_url" value={{Request::fullurl()}}>
-                                        <?php
-                                        $filter = Request::get('filter_column');
-                                        $key = $table . '.created_at';
-                                        $value = $filter[$key]['value'];
-                                        ?>
-                                        <div class="col-sm-5 col-xs-5">
-                                            <div class="input-group">
-                                                @if($filter[$key])
-                                                @else
-                                                    <span class="input-group-addon">
-                                                <a href="javascript:void(0)"
-                                                   onclick="$('#start_date').data('daterangepicker').toggle();">
-                                                    <i class="fa fa-calendar"></i>
-                                                </a>
-                                            </span>
-                                                @endif
-                                                <input name="filter_column[{{$table}}.created_at][value][]" type="text"
-                                                       placeholder="{{ trans('crudbooster.filter_date_start') }}"
-                                                       title="Fecha" readonly="" required=""
-                                                       class="form-control @if($filter[$key]) @else datetimepicker @endif"
-                                                       id="start_date" value="{{$value[0]}}">
-                                            </div>
-                                        </div>
-                                        <div class="col-sm-5 col-xs-5">
-                                            <div class="input-group ">
-                                                @if($filter[$key])
-                                                @else
-                                                    <span class="input-group-addon">
-                                                <a href="javascript:void(0)"
-                                                   onclick="$('#end_date').data('daterangepicker').toggle();">
-                                                    <i class="fa fa-calendar"></i>
-                                                </a>
-                                            </span>
-                                                @endif
-                                                <input name="filter_column[{{$table}}.created_at][value][]" type="text"
-                                                       placeholder="{{ trans('crudbooster.filter_date_end') }}"
-                                                       title="Fecha" readonly="" required=""
-                                                       class="form-control @if($filter[$key]) @else datetimepicker @endif"
-                                                       id="end_date" value="{{$value[1]}}">
-                                            </div>
-                                        </div>
-                                        <div class="col-sm-2 col-xs-2">
-                                            @if(!g("last_url"))
-                                                <button type='submit' class="btn btn-sm btn-default"><i
-                                                            class="fa fa-search"></i></button>
+                    <?php $grid_col = $grid_col - 5; ?>
+                    <div class="col-sm-5">
+                        <div class="box-tools pull-{{ trans('crudbooster.left') }}">
+                            <div class="row">
+                                <form method='get' action='{{Request::url()}}'>
+                                    <input type="hidden" name="filter_column[{{$table}}.created_at][type]" value="between">
+                                    {!! CRUDBooster::getUrlParameters("filter_column[$table.created_at]") !!}
+                                    <?php
+                                    $filter = Request::get('filter_column');
+                                    $key = $table . '.created_at';
+                                    $value = $filter[$key]['value'];
+                                    ?>
+                                    <div class="col-sm-5 col-xs-5">
+                                        <div class="input-group">
+                                            @if($filter[$key])
                                             @else
-                                                <a href={{urldecode(g("last_url"))}} class="btn btn-sm btn-danger"><i
-                                                        class="fa fa-trash-o"></i></a>
+                                            <span class="input-group-addon">
+                                                <a href="javascript:void(0)" onclick="$('#start_date').data('daterangepicker').toggle();">
+                                                    <i class="fa fa-calendar"></i>
+                                                </a>
+                                            </span>
                                             @endif
+                                            <input name="filter_column[{{$table}}.created_at][value][]" type="text" placeholder="{{ trans('crudbooster.filter_date_start') }}" title="Fecha" readonly="" required="" class="form-control @if($filter[$key]) @else datetimepicker @endif" id="start_date" value="{{$value[0]}}">
                                         </div>
-                                    </form>
-                                </div>
+                                    </div>
+                                    <div class="col-sm-5 col-xs-5">
+                                        <div class="input-group ">
+                                            @if($filter[$key])
+                                            @else
+                                            <span class="input-group-addon">
+                                                <a href="javascript:void(0)" onclick="$('#end_date').data('daterangepicker').toggle();">
+                                                    <i class="fa fa-calendar"></i>
+                                                </a>
+                                            </span>
+                                            @endif
+                                            <input name="filter_column[{{$table}}.created_at][value][]" type="text" placeholder="{{ trans('crudbooster.filter_date_end') }}" title="Fecha" readonly="" required="" class="form-control @if($filter[$key]) @else datetimepicker @endif" id="end_date" value="{{$value[1]}}">
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-2 col-xs-2">
+                                        <?php  $parameters=Request::all(); ?>
+                                        @if($parameters["filter_column"]["$table.created_at"]["type"])
+                                        <?php
+                                        unset($parameters["filter_column"]["$table.created_at"]);
+                                        $build_query = urldecode(http_build_query($parameters));
+                                        $build_query = ($build_query) ? "?" . $build_query : "";
+                                        $build_query = (Request::all()) ? $build_query : "";
+                                        ?>
+                                        <button type='button' onclick='location.href="{{ CRUDBooster::mainpath().$build_query}}"' title="{{trans('crudbooster.button_reset')}}" class='btn btn-sm btn-warning'><i class='fa fa-ban'></i>
+                                            </button>
+                                        @else
+                                        <button type='submit' class="btn btn-sm btn-default"><i class="fa fa-search"></i></button>
+                                        @endif
+                                    </div>
+                                </form>
                             </div>
                         </div>
+                    </div>
                     @endif
                     <div class="col-sm-{{$grid_col}}">
                         <div class="box-tools pull-{{ trans('crudbooster.right') }}">
