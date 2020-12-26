@@ -3,7 +3,10 @@
 
     <!-- Logo -->
     <a href="{{url(config('crudbooster.ADMIN_PATH'))}}" title='{{Session::get('appname')}}' class="logo">
-        @if(CRUDBooster::getSetting('logo'))
+        @if(CRUDBooster::getSetting('admin_panel_logo'))
+            <span class="logo-lg"><img src="{{asset(CRUDBooster::getSetting('admin_panel_logo'))}}" class="brandlogo-image"></span>
+            <span class="logo-mini"><img src="{{asset(CRUDBooster::getSetting('admin_panel_logo'))}}" class="brandlogo-image"></span>
+        @elseif(CRUDBooster::getSetting('logo'))
             <span class="logo-lg"><img src="{{asset(CRUDBooster::getSetting('logo'))}}" class="brandlogo-image"></span>
             <span class="logo-mini"><img src="{{asset(CRUDBooster::getSetting('logo'))}}" class="brandlogo-image"></span>
         @else
