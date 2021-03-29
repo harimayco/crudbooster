@@ -71,7 +71,7 @@
                     }
 
                     @eval("if($query) {
-                        echo \"<li><a title='\$label' href='\$url' target='\$target' $type $extra><i class='\$icon'></i> \$label</a></li>\";
+                        echo \"<li><a title='\$label' href='\$url' target='\$target' \$type \$extra><i class='\$icon'></i> \$label</a></li>\";
                     }");
                 } else {
                     if(isset($extra)){
