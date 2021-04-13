@@ -18,7 +18,7 @@ class StatisticBuilderController extends CBController
         $this->global_privilege = false;
 
         $this->button_table_action = true;
-        $this->button_action_style = "button_icon_text";
+        $this->button_action_style = "dropdown";
         $this->button_add = true;
         $this->button_delete = true;
         $this->button_edit = true;
