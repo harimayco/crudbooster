@@ -757,6 +757,8 @@ class CBController extends Controller
         $where = urldecode($where);
         $orderby=Request::get('order_by');
         $orderby=urldecode($orderby);
+        $paginate=Request::get('paginate');
+        $paginate = urldecode($paginate);
         $columns = Request::get('columns');
         $columns = explode(",", $columns);
         $searchable_columns=Request::get('search_in') ? explode(',',Request::get('search_in')): NULL;
@@ -791,7 +793,7 @@ class CBController extends Controller
             $result->orderby($tablePK, 'desc');
         }
 
-        $data['result'] = $result->paginate(6);
+        $data['result'] = $result->paginate($paginate?:6);
 
         return view('crudbooster::default.type_components.datamodal.browser', $data);
     }
